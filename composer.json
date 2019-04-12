@@ -1,0 +1,42 @@
+{
+  "name": "ether/web-payments",
+  "description": "Use the Web Payments API and Apply Pay to vastly improve your checkout process!",
+  "version": "1.0.0",
+  "type": "craft-plugin",
+  "keywords": [
+    "payments",
+    "web",
+    "apple",
+    "google",
+    "pay",
+    "apple pay",
+    "google pay"
+  ],
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Ether",
+      "homepage": "https://ethercreative.co.uk"
+    }
+  ],
+  "support": {
+    "email": "dev@ethercreative.co.uk",
+    "issues": "https://github.com/ethercreative/web-payments/issues?state=open",
+    "source": "https://github.com/ethercreative/web-payments",
+    "docs": "https://github.com/ethercreative/web-payments/blob/master/README.md"
+  },
+  "require": {
+    "craftcms/cms": "^3.1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "ether\\webpayments\\": "src/"
+    }
+  },
+  "extra": {
+    "handle": "web-payments",
+    "name": "Web Payments",
+    "documentationUrl": "https://github.com/ethercreative/web-payments/blob/master/README.md",
+    "class": "ether\\webpayments\\WebPayments"
+  }
+}
