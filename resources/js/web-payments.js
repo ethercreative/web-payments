@@ -10,8 +10,7 @@ class WebPayments {
 	static METHOD_GOOGLE   = 'google-pay';
 
 	placeholderEl   = null;
-	paymentMethod   = '';
-	paymentData     = {};
+	paymentMethods  = [];
 	shippingMethods = null;
 	cart            = null;
 	requestDetails  = [];
@@ -22,19 +21,6 @@ class WebPayments {
 
 	static get supportsApplePay () {
 		return window.ApplePaySession && ApplePaySession.canMakePayments();
-	}
-
-	get paymentMethodType () {
-		switch (this.paymentMethod) {
-			case WebPayments.METHOD_APPLE:
-				return 'https://apple.com/apple-pay';
-			case WebPayments.METHOD_COMMERCE:
-				return 'basic-card';
-			case WebPayments.METHOD_GOOGLE:
-				return 'https://google.com/pay';
-		}
-
-		return null;
 	}
 
 	get shippingType () {
@@ -50,15 +36,23 @@ class WebPayments {
 	constructor (opts) {
 		this.placeholderEl   = document.getElementById(opts.id);
 		this.cart            = opts.cart;
-		this.paymentMethod   = opts.paymentMethod;
-		this.paymentData = opts.paymentData;
 		this.shippingMethods = opts.shippingMethods;
 		this.requestDetails  = opts.requestDetails;
 		this.requestShipping = opts.requestShipping;
 
+		const methodKeys = [];
+		this.paymentMethods = opts.paymentMethods.map(({ type, data }) => {
+			methodKeys.push(type);
+
+			return {
+				supportedMethods: WebPayments.paymentMethodType(type),
+				data,
+			};
+		});
+
 		if (window.PaymentRequest)
 			this.initPaymentRequest();
-		else if (WebPayments.supportsApplePay && this.paymentMethod === WebPayments.METHOD_APPLE)
+		else if (WebPayments.supportsApplePay && methodKeys.indexOf(WebPayments.METHOD_APPLE) > -1)
 			this.initApplePay();
 	}
 
@@ -70,14 +64,10 @@ class WebPayments {
 			this.showApplyPayButton();
 		else
 			this.showGenericButton();
-
-		// TODO: this
 	}
 
 	initApplePay () {
 		this.showApplyPayButton();
-
-		// TODO: this
 	}
 
 	// Actions
@@ -179,13 +169,7 @@ class WebPayments {
 			return;
 
 		const request = new PaymentRequest(
-			[
-				{
-					supportedMethods: this.paymentMethodType,
-					data: this.paymentData,
-				},
-				// TODO: Support multiple payment methods
-			],
+			this.paymentMethods,
 			{
 				...this.cart,
 				shippingOptions: this.shippingMethods,
@@ -234,16 +218,16 @@ class WebPayments {
 	// Button Click Events
 	// -------------------------------------------------------------------------
 
-	onApplePayClick = e => {
+	onApplePayClick = async e => {
 		e.preventDefault();
 
-		this.requestApplePayment();
+		await this.requestApplePayment();
 	};
 
-	onGenericPayClick = e => {
+	onGenericPayClick = async e => {
 		e.preventDefault();
 
-		this.requestGenericPayment();
+		await this.requestGenericPayment();
 	};
 
 	// Shipping Change Events
@@ -259,6 +243,19 @@ class WebPayments {
 
 	// Helpers
 	// =========================================================================
+
+	static paymentMethodType (type) {
+		switch (type) {
+			case WebPayments.METHOD_APPLE:
+				return 'https://apple.com/apple-pay';
+			case WebPayments.METHOD_COMMERCE:
+				return 'basic-card';
+			case WebPayments.METHOD_GOOGLE:
+				return 'https://google.com/pay';
+		}
+
+		return null;
+	}
 
 	injectButton (btn) {
 		this.placeholderEl.parentNode.insertBefore(btn, this.placeholderEl);

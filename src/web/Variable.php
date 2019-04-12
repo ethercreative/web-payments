@@ -41,8 +41,7 @@ class Variable
 		$options = array_merge([
 			'id' => $id,
 			'cart' => null, // TODO: If commerce is installed default to active cart
-			'paymentMethod' => 'commerce',
-			'paymentData' => [],
+			'paymentMethods' => [],
 			'shippingMethods' => null, // TODO: if commerce installed and cart is Order, default to available shipping methods
 			'requestDetails' => [],
 			'requestShipping' => false,
