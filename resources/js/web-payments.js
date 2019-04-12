@@ -112,19 +112,22 @@ class WebPayments {
 		let total = 0;
 
 		const displayItems = [...this.cart.displayItems].map(item => {
-			if (item.type !== 'shipping') {
-				total += +item.amount.value;
-				return item;
-			}
+			if (item.type === 'shipping')
+				return null;
 
+			total += +item.amount.value;
+			return item;
+		}).filter(Boolean);
+
+		if (activeMethod) {
 			total += +activeMethod.amount.value;
 
-			return {
+			displayItems.push({
 				type: 'shipping',
 				label: activeMethod.label,
 				amount: activeMethod.amount,
-			};
-		});
+			});
+		}
 
 		return {
 			...this.cart,
@@ -184,13 +187,28 @@ class WebPayments {
 		);
 
 		request.addEventListener(
+			'paymentmethodchange',
+			this.onPaymentMethodChange
+		);
+
+		request.addEventListener(
+			'payerdetailchange',
+			this.onPayerDetailChange
+		);
+
+		request.addEventListener(
+			'merchantvalidation',
+			this.onMerchantValidation
+		);
+
+		request.addEventListener(
 			'shippingaddresschange',
-			this.onShippingAddressChange.bind(this, request)
+			this.onShippingAddressChange
 		);
 
 		request.addEventListener(
 			'shippingoptionchange',
-			this.onShippingMethodChange.bind(this, request)
+			this.onShippingMethodChange
 		);
 
 		let response;
@@ -201,10 +219,6 @@ class WebPayments {
 			// TODO: Show error message if not cancelled (ignore otherwise)
 			console.log(e.message); // Likely to be "Request cancelled"
 			return;
-		}
-
-		if (this.paymentMethod === WebPayments.METHOD_COMMERCE) {
-			// TODO: Send details to server (or use additional JS if required, i.e. Stripe)
 		}
 
 		console.log(response);
@@ -230,15 +244,27 @@ class WebPayments {
 		await this.requestGenericPayment();
 	};
 
-	// Shipping Change Events
+	// Payment Request Events
 	// -------------------------------------------------------------------------
 
-	onShippingAddressChange = (paymentRequest, e) => {
-		e.updateWith(this.updateCart(paymentRequest));
+	onPaymentMethodChange = e => {
+		console.log(e.target);
 	};
 
-	onShippingMethodChange = (paymentRequest, e) => {
-		e.updateWith(this.updateCart(paymentRequest));
+	onPayerDetailChange = e => {
+		console.log(e.target);
+	};
+
+	onMerchantValidation = (/*e*/) => {
+		// TODO: this
+	};
+
+	onShippingAddressChange = e => {
+		e.updateWith(this.updateCart(e.target));
+	};
+
+	onShippingMethodChange = e => {
+		e.updateWith(this.updateCart(e.target));
 	};
 
 	// Helpers

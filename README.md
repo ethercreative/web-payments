@@ -47,19 +47,13 @@ An array of additional details to request. Any of: `name`, `email`, `phone`.
         id: '1',
         displayItems: [
             {
-                type: 'lineItem',
                 label: 'Example Item',
                 amount: { currency: 'GBP', value: '1.00' },
-            },
-            {
-                type: 'shipping',
-                label: 'Standard shipping',
-                amount: { currency: 'GBP', value: '0.50' },
             },
         ],
         total: {
             label: 'Total',
-            amount: { currency: 'GBP', value: '1.50' },
+            amount: { currency: 'GBP', value: '1.00' },
         },
     },
     paymentMethods: [
@@ -101,7 +95,6 @@ An array of additional details to request. Any of: `name`, `email`, `phone`.
             id: 'standard',
             label: 'Standard shipping',
             amount: { currency: 'GBP', value: '0.50' },
-            selected: true,
         },
         {
             id: 'free',
