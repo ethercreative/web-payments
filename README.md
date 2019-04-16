@@ -21,9 +21,9 @@ An array of twig objects containing details about the available payment methods.
 The payment method to use. One of: `commerce` (default), `apple-pay`, `google-pay`.
 
 ##### `paymentMethods[i].data`
-Additional data for the selected `paymentMethods[i].type`.
-[For `commerce`](https://developer.mozilla.org/en-US/docs/Web/API/BasicCardRequest).
-[For `apple-pay`](https://developer.apple.com/documentation/apple_pay_on_the_web/applepayrequest).
+Additional data for the selected `paymentMethods[i].type`.  
+[For `commerce`](https://developer.mozilla.org/en-US/docs/Web/API/BasicCardRequest).  
+[For `apple-pay`](https://developer.apple.com/documentation/apple_pay_on_the_web/applepayrequest).  
 [For `google-pay`](https://developers.google.com/pay/api/web/reference/object#PaymentDataRequest).
 
 ##### `shippingMethods`

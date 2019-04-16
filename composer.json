@@ -26,7 +26,9 @@
     "docs": "https://github.com/ethercreative/web-payments/blob/master/README.md"
   },
   "require": {
-    "craftcms/cms": "^3.1.0"
+    "craftcms/cms": "^3.1.0",
+    "guzzlehttp/guzzle": "^6.3.3",
+    "ext-json": "*"
   },
   "autoload": {
     "psr-4": {

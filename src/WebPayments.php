@@ -10,6 +10,7 @@ namespace ether\webpayments;
 
 use craft\base\Plugin;
 use craft\web\twig\variables\CraftVariable;
+use ether\webpayments\services\CartService;
 use ether\webpayments\web\Variable;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
@@ -19,6 +20,7 @@ use yii\base\InvalidConfigException;
  *
  * @author  Ether Creative
  * @package ether\webpayments
+ * @property CartService $cart
  */
 class WebPayments extends Plugin
 {
@@ -29,6 +31,10 @@ class WebPayments extends Plugin
 	public function init ()
 	{
 		parent::init();
+
+		$this->setComponents([
+			'cart' => CartService::class,
+		]);
 
 		// Events
 		// ---------------------------------------------------------------------
