@@ -33,6 +33,7 @@ class CartService extends Component
 		$li->qty = 1;
 		$li->refreshFromPurchasable();
 
+		// FIXME: Fix missing order number
 		$order = new Order();
 		$order->orderLanguage = Craft::$app->sites->currentSite->language;
 		$order->currency = 'GBP';
@@ -53,6 +54,8 @@ class CartService extends Component
 	{
 		$displayItems = [];
 		$total = 0;
+
+		// FIXME: Missing Tax
 
 		foreach ($order->lineItems as $item)
 		{

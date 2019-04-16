@@ -10,9 +10,6 @@ namespace ether\webpayments\web;
 
 use Craft;
 use craft\commerce\base\Purchasable;
-use craft\commerce\elements\Order;
-use craft\commerce\models\ShippingMethod;
-use craft\commerce\Plugin as Commerce;
 use craft\web\View;
 use ether\webpayments\web\assets\WebPaymentsAsset;
 use ether\webpayments\WebPayments;
@@ -60,6 +57,7 @@ class Variable
 			'requestDetails' => [],
 			'requestShipping' => false,
 
+			// TODO: Get from Stripe gateway
 			'stripeApiKey' => 'pk_test_M9f7RxQ2I3SWGsQhrUlTMpUT00C4DptGeg',
 		], $options);
 
@@ -90,6 +88,8 @@ class Variable
 				'amount' => 0,
 			],
 		];
+
+		// TODO: Include TAX
 
 		// From Purchasable
 		// ---------------------------------------------------------------------

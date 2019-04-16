@@ -47,12 +47,16 @@ class OrderController extends Controller
 			$items[0]['id']
 		);
 
+		// TODO: Support multiple items
+		// TODO: Billing address
+		// TODO: Don't require shipping address
 		$order = $wp->cart->orderFromPurchasable($purchasable, true);
 		$order = $wp->cart->setShippingAddress($order, $data['shippingAddress']);
 		$order->shippingMethodHandle = $data['shippingOption']['id'];
 		$order->email = $data['payerEmail'];
 
 		$order->setGatewayId(
+			// TODO: don't hard-code
 			$commerce->getGateways()->getGatewayByHandle('stripe')->id
 		);
 
@@ -61,6 +65,7 @@ class OrderController extends Controller
 		$paymentForm = $gateway->getPaymentFormModel();
 		$token = $data['token'];
 
+		// TODO: Account for 3D Secure
 		$paymentForm->setAttributes([
 			'token' => $token['id'],
 		], false);
@@ -84,6 +89,8 @@ class OrderController extends Controller
 			$redirect,
 			$transaction
 		);
+
+		// TODO: Error handling
 
 		return $this->asJson(['status' => 'success']);
 	}
