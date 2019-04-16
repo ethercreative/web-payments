@@ -20,6 +20,8 @@ class WebPayments {
 		this.action = opts.actionTrigger;
 		this.csrf = opts.csrf;
 
+		// TODO: Pass cart items to server to get actual cart (to ensure prices aren't tampered with)?
+
 		const paymentRequestObject = {
 			country: opts.country.toUpperCase(),
 			currency: opts.currency.toLowerCase(),

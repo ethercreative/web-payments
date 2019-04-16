@@ -60,7 +60,7 @@ class Variable
 			'requestDetails' => [],
 			'requestShipping' => false,
 
-			'stripeApiKey' => 'pk_test_TYooMQauvdEDq54NiTphI7jx',
+			'stripeApiKey' => 'pk_test_M9f7RxQ2I3SWGsQhrUlTMpUT00C4DptGeg',
 		], $options);
 
 		// TODO: if $options['cart'] instanceof Order convert to WebPayments cart

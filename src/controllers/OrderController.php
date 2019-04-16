@@ -43,17 +43,49 @@ class OrderController extends Controller
 		);
 
 		/** @var Purchasable $purchasable */
-		$purchasable =$commerce->purchasables->getPurchasableById(
+		$purchasable = $commerce->purchasables->getPurchasableById(
 			$items[0]['id']
 		);
 
-		$cart = $wp->cart->orderFromPurchasable($purchasable);
-		$cart = $wp->cart->setShippingAddress($cart, $data['shippingAddress']);
-		$cart->shippingMethodHandle = $data['shippingOption']['id'];
-		$cart->email = $data['payerEmail'];
+		$order = $wp->cart->orderFromPurchasable($purchasable, true);
+		$order = $wp->cart->setShippingAddress($order, $data['shippingAddress']);
+		$order->shippingMethodHandle = $data['shippingOption']['id'];
+		$order->email = $data['payerEmail'];
 
-		$cart->validate();
-		die(var_dump($cart->getErrors()));
+		$order->setGatewayId(
+			$commerce->getGateways()->getGatewayByHandle('stripe')->id
+		);
+
+		$gateway = $order->getGateway();
+
+		$paymentForm = $gateway->getPaymentFormModel();
+		$token = $data['token'];
+
+		$paymentForm->setAttributes([
+			'token' => $token['id'],
+		], false);
+		$paymentSource = $order->getPaymentSource();
+
+		if ($paymentSource)
+			$paymentForm->populateFromPaymentSource($paymentSource);
+
+		$order->recalculate();
+
+		$paymentForm->validate();
+
+		Craft::$app->elements->saveElement($order);
+
+		$redirect = '';
+		$transaction = null;
+
+		$commerce->getPayments()->processPayment(
+			$order,
+			$paymentForm,
+			$redirect,
+			$transaction
+		);
+
+		return $this->asJson(['status' => 'success']);
 	}
 
 }

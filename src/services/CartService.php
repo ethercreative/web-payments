@@ -26,13 +26,24 @@ use craft\commerce\Plugin as Commerce;
 class CartService extends Component
 {
 
-	public function orderFromPurchasable (Purchasable $purchasable)
+	public function orderFromPurchasable (Purchasable $purchasable, $save = false)
 	{
 		$li = new LineItem();
 		$li->setPurchasable($purchasable);
 		$li->qty = 1;
+		$li->refreshFromPurchasable();
 
 		$order = new Order();
+		$order->orderLanguage = Craft::$app->sites->currentSite->language;
+		$order->currency = 'GBP';
+		$order->setPaymentCurrency($order->currency);
+
+		if ($save)
+		{
+			Craft::$app->elements->saveElement($order);
+			$li->orderId = $order->id;
+		}
+
 		$order->addLineItem($li);
 
 		return $order;
