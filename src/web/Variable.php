@@ -12,6 +12,7 @@ use Craft;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as Commerce;
 use craft\errors\ElementNotFoundException;
+use craft\errors\SiteNotFoundException;
 use craft\web\View;
 use ether\webpayments\web\assets\WebPaymentsAsset;
 use ether\webpayments\WebPayments;
@@ -32,6 +33,8 @@ class Variable
 	/**
 	 * Render the payment button
 	 *
+	 * TODO: Add on completion events (i.e. clear active cart & redirect)
+	 *
 	 * @param array $options
 	 *
 	 * @return string
@@ -45,22 +48,15 @@ class Variable
 		$view = Craft::$app->getView();
 		$request = Craft::$app->getRequest();
 		$general = Craft::$app->getConfig()->getGeneral();
-		$wp = WebPayments::getInstance();
+		$wp = WebPayments::getInstance()->stripe;
+		$commerce = Commerce::getInstance();
+		$settings = WebPayments::getInstance()->getSettings();
 
 		$id = uniqid('cwp_');
 
-		if (array_key_exists('cart', $options) && $options['cart'] instanceof Order)
-			$cart = $wp->cart->orderToPaymentRequest(
-				$options['cart'],
-				true
-			);
-		else
-			$cart = $wp->cart->orderToPaymentRequest(
-				$wp->cart->buildOrder($options['items']),
-				true
-			);
+		$cart = $this->_getCart($options);
 
-		if (empty($cart['items']))
+		if ($cart === null || empty($cart['items']))
 			return null;
 
 		// TODO: Make default options configurable in plugin settings
@@ -69,16 +65,20 @@ class Variable
 			'csrf' => [$general->csrfTokenName, $request->getCsrfToken()],
 			'actionTrigger' => $general->actionTrigger,
 
-			'currency' => Commerce::getInstance()->getCarts()->getCart()->currency,
-
+			'country' => $commerce->getAddresses()->getStoreLocationAddress()->country->iso,
+			'currency' => $commerce->getCarts()->getCart()->currency,
 			'shippingMethods' => [],
-			'requestDetails' => ['email'],
-			'requestShipping' => false,
 
-			'stripeApiKey' => $wp->cart->getStripeGateway()->settings['publishableKey'],
+			'requestDetails' => $settings->requestDetails,
+			'requestShipping' => $settings->requestShipping === 'no' ? false : $settings->requestShipping,
+
+			'stripeApiKey' => $wp->getStripeGateway()->settings['publishableKey'],
 		], $options);
 
 		$options['cart'] = $cart;
+
+		if (!in_array('email', $options['requestDetails']))
+			$options['requestDetails'][] = 'email';
 
 		$view->registerAssetBundle(WebPaymentsAsset::class);
 		$view->registerJsFile('https://js.stripe.com/v3/');
@@ -88,6 +88,31 @@ class Variable
 		);
 
 		return new Markup('<span id="' . $id . '"></span>', 'utf8');
+	}
+
+	// Helpers
+	// =========================================================================
+
+	/**
+	 * @param array $options
+	 *
+	 * @return array|null
+	 * @throws ElementNotFoundException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws SiteNotFoundException
+	 */
+	private function _getCart (array $options)
+	{
+		$wp = WebPayments::getInstance()->stripe;
+
+		if (array_key_exists('cart', $options) && $options['cart'] instanceof Order)
+			return $wp->orderToPaymentRequest($options['cart'], true);
+
+		if (array_key_exists('items', $options))
+			return $wp->orderToPaymentRequest($wp->buildOrder($options['items']), true);
+
+		return null;
 	}
 
 }

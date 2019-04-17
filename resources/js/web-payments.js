@@ -103,6 +103,7 @@ async function onToken (e, state, post) {
 			shippingMethod: e.shippingOption,
 		});
 
+		// TODO: Handle on completion events (i.e. clear active cart & redirect)
 		e.complete(data.status);
 	} catch (_) {
 		e.complete('fail');

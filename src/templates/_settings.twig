@@ -1,0 +1,68 @@
+{% from '_includes/forms' import field, select, selectField, checkboxGroupField %}
+
+{{ selectField({
+	first: true,
+	name: 'gatewayUid',
+	label: 'Gateway'|t('web-payments'),
+	instructions: 'The gateway web payments should use (currently requires a Stripe gateway).'|t('web-payments'),
+	options: gateways,
+	value: settings.gatewayUid,
+	required: true,
+}) }}
+
+{{ selectField({
+	name: 'requestShipping',
+	label: 'Request Shipping'|t('web-payments'),
+	instructions: 'Should we request a shipping address? Can be overridden on a per button basis. Setting this will also set the wording used in the UI.'|t('web-payments'),
+	options: {
+		'no': 'No'|t('web-payments'),
+		'shipping': 'Shipping'|t('web-payments'),
+		'delivery': 'Delivery'|t('web-payments'),
+		'pickup': 'Pickup'|t('web-payments'),
+	},
+	value: settings.requestShipping,
+}) }}
+
+{{ checkboxGroupField({
+	name: 'requestDetails',
+	label: 'Request Details'|t('web-payments'),
+	instructions: 'Additional information to request from the customer. Can be overridden on a per button basis.'|t('web-payments'),
+	options: {
+		'name': 'Name'|t('web-payments'),
+		'phone': 'Phone'|t('web-payments'),
+	},
+	values: settings.requestDetails,
+}) }}
+
+{% set requestDetailsFields %}
+	<table class="data fullwidth collapsible">
+		<thead>
+		<tr>
+			<th>Details</th>
+			<th>Field</th>
+		</tr>
+		</thead>
+		<tbody>
+		{% for key, label in {
+			'name': 'Name',
+			'phone': 'Phone',
+		} %}
+			<tr>
+				<td>{{ label|t('web-payments') }}</td>
+				<td>
+					{{ select({
+						name: 'requestDetailFields[' ~ key ~ ']',
+						options: fields,
+						value: settings.requestDetailFields[key] ?? null,
+					}) }}
+				</td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+{% endset %}
+
+{{ field({
+	label: 'Request Details Fields'|t('web-payments'),
+	instructions: 'Map the additional details to fields on the order.'|t('web-payments'),
+}, requestDetailsFields) }}

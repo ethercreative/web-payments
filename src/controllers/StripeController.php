@@ -9,7 +9,7 @@
 namespace ether\webpayments\controllers;
 
 use Craft;
-use craft\commerce\errors\PaymentException;
+use craft\base\Field;
 use craft\errors\ElementNotFoundException;
 use craft\errors\SiteNotFoundException;
 use craft\helpers\Json;
@@ -48,7 +48,7 @@ class StripeController extends Controller
 		$this->requirePostRequest();
 
 		$request = Craft::$app->getRequest();
-		$wp      = WebPayments::getInstance()->cart;
+		$wp      = WebPayments::getInstance()->stripe;
 
 		$items = Json::decodeIfJson(
 			$request->getRequiredBodyParam('items'),
@@ -61,7 +61,7 @@ class StripeController extends Controller
 		);
 
 		$order = $wp->buildOrder($items);
-		$order = $wp->setShippingAddress($order, $address);
+		$wp->setShippingAddress($order, $address);
 
 		if (!$order->shippingAddress->validate())
 			return $this->asJson(['status' => 'invalid_shipping_address']);
@@ -90,7 +90,7 @@ class StripeController extends Controller
 		$this->requirePostRequest();
 
 		$request = Craft::$app->getRequest();
-		$wp      = WebPayments::getInstance()->cart;
+		$wp      = WebPayments::getInstance()->stripe;
 
 		$items = Json::decodeIfJson(
 			$request->getRequiredBodyParam('items'),
@@ -108,7 +108,7 @@ class StripeController extends Controller
 		);
 
 		$order = $wp->buildOrder($items);
-		$order = $wp->setShippingAddress($order, $address);
+		$wp->setShippingAddress($order, $address);
 		$order->shippingMethodHandle = $method['id'];
 
 		return $this->asJson(array_merge(
@@ -133,12 +133,17 @@ class StripeController extends Controller
 		$this->requirePostRequest();
 
 		$request = Craft::$app->getRequest();
-		$wp      = WebPayments::getInstance()->cart;
+		$wp      = WebPayments::getInstance()->stripe;
+		$settings= WebPayments::getInstance()->getSettings();
 
-		// TODO: Store name and phone on order somehow (in customer?)
-		$name = $request->getBodyParam('payerName');
-		$phone = $request->getBodyParam('payerPhone');
 		$email = $request->getRequiredBodyParam('payerEmail');
+
+		$requestDetails = [
+			'name' => $request->getBodyParam('payerName'),
+			'phone' => $request->getBodyParam('payerPhone'),
+		];
+
+		$name = $requestDetails['name'];
 
 		$token = Json::decodeIfJson(
 			$request->getRequiredBodyParam('token'),
@@ -161,10 +166,26 @@ class StripeController extends Controller
 		);
 
 		$order = $wp->buildOrder($items, true);
-		$order = $wp->setShippingAddress($order, $address);
-		$order->shippingMethodHandle = $method['id'];
-		$order->billingSameAsShipping = true;
+		$wp->setBillingAddress($order, $token, $name);
+
+		if (!empty($address))
+			$wp->setShippingAddress($order, $address, $name);
+
+		if (!empty($method))
+			$order->shippingMethodHandle = $method['id'];
+
 		$order->setEmail($email);
+
+		foreach ($settings->requestDetailFields as $key => $uid)
+		{
+			if (empty($uid) || !$requestDetails[$key])
+				continue;
+
+			/** @var Field $field */
+			$field = Craft::$app->getFields()->getFieldByUid($uid);
+			/** @noinspection PhpParamsInspection */
+			$order->setFieldValue($field->handle, $requestDetails[$key]);
+		}
 
 		if (!$order->validate())
 		{
@@ -172,14 +193,14 @@ class StripeController extends Controller
 
 			foreach ($order->getErrorSummary(true) as $error)
 			{
-				if (strpos($error, 'address') !== false)
-				{
-					$status = 'invalid_shipping_address';
-					break;
-				}
-				else if (strpos($error, 'email') !== false)
+				if (strpos($error, 'email') !== false)
 				{
 					$status = 'invalid_payer_email';
+					break;
+				}
+				else if (strpos($error, 'address') !== false)
+				{
+					$status = 'invalid_shipping_address';
 					break;
 				}
 			}
@@ -194,7 +215,7 @@ class StripeController extends Controller
 		$paymentForm = $gateway->getPaymentFormModel();
 		$paymentForm->setAttributes([
 			'token' => $token['id'],
-			// TODO: Account for 3D Secure
+			// TODO: Account for 3D Secure (do we need to?)
 		], false);
 
 		if ($paymentSource)

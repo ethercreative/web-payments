@@ -18,10 +18,13 @@ use craft\commerce\models\Address;
 use craft\commerce\models\LineItem;
 use craft\commerce\models\ShippingMethod;
 use craft\commerce\Plugin as Commerce;
+use craft\db\Query;
 use craft\errors\ElementNotFoundException;
 use craft\errors\SiteNotFoundException;
+use ether\webpayments\WebPayments;
 use Throwable;
 use yii\base\Exception;
+use yii\base\InvalidConfigException;
 
 /**
  * Class CartService
@@ -29,16 +32,29 @@ use yii\base\Exception;
  * @author  Ether Creative
  * @package ether\webpayments\services
  */
-class CartService extends Component
+class StripeService extends Component
 {
 
 	/**
 	 * @return Gateway|GatewayInterface|null
+	 * @throws InvalidConfigException
 	 */
 	public function getStripeGateway ()
 	{
-		// TODO: Make configurable in settings
-		return Commerce::getInstance()->getGateways()->getGatewayByHandle('stripe');
+		$uid = WebPayments::getInstance()->getSettings()->gatewayUid;
+
+		if (!$uid)
+			throw new InvalidConfigException('Gateway must be set!');
+
+		$id = (new Query())
+			->select('id')
+			->where([
+				'uid' => WebPayments::getInstance()->getSettings()->gatewayUid,
+			])
+			->from('{{%commerce_gateways}}')
+			->column()[0];
+
+		return Commerce::getInstance()->getGateways()->getGatewayById($id);
 	}
 
 	/**
@@ -134,7 +150,6 @@ class CartService extends Component
 			];
 
 			$displayItems[] = [
-				'id'     => $item->purchasableId,
 				'label'  => $item->purchasable->title,
 				'amount' => $amount,
 			];
@@ -147,8 +162,6 @@ class CartService extends Component
 			$amount = $adjustment->amount * 100;
 
 			$displayItems[] = [
-				'id'     => $adjustment->id,
-				'type'   => $adjustment->type,
 				'label'  => $adjustment->name,
 				'amount' => $amount,
 			];
@@ -205,38 +218,75 @@ class CartService extends Component
 	/**
 	 * Builds an address from the given array and sets it on the given order
 	 *
-	 * @param Order $order
-	 * @param array $address
-	 *
-	 * @return Order
+	 * @param Order  $order
+	 * @param array  $address
+	 * @param string $fallbackName
 	 */
-	public function setShippingAddress (Order $order, array $address)
+	public function setShippingAddress (Order $order, array $address, $fallbackName = null)
 	{
+		if (empty($address) || empty($address['country']))
+			return;
+
+		if (empty($fallbackName))
+			$fallbackName = 'Unknown Person';
+
 		$a = new Address();
 
-		$name         = explode(' ', $address['recipient'], 2);
+		$name = explode(' ', $address['recipient'] ?: $fallbackName, 2);
 		$a->firstName = $name[0];
 		if (count($name) > 1)
 			$a->lastName = $name[1];
 
-		$a->address1 = $address['addressLine'][0];
+		if (!empty($address['addressLine']))
+			$a->address1 = $address['addressLine'][0];
 		if (count($address['addressLine']) > 1)
 			$a->address2 = $address['addressLine'][1];
 
 		$a->city = $address['city'];
-
 		$a->setStateValue($address['region']);
-
-		$a->countryId =
-			Commerce::getInstance()->getCountries()->getCountryByIso(
-				$address['country']
-			)->id;
-
+		$a->countryId = Commerce::getInstance()->getCountries()->getCountryByIso(
+			$address['country']
+		)->id;
 		$a->zipCode = $address['postalCode'];
 
 		$order->setShippingAddress($a);
+	}
 
-		return $order;
+	/**
+	 * Set the billing address from the given Stripe Token array on the given order
+	 *
+	 * @param Order $order
+	 * @param array $token
+	 * @param null  $fallbackName
+	 */
+	public function setBillingAddress (Order $order, array $token, $fallbackName = null)
+	{
+		$address = $token['card'];
+
+		if (empty($address) || empty($address['address_country']))
+			return;
+
+		if (empty($fallbackName))
+			$fallbackName = 'Unknown Person';
+
+		$a = new Address();
+
+		$name = explode(' ', $address['name'] ?: $fallbackName, 2);
+
+		$a->firstName = $name[0];
+		if (count($name) > 1)
+			$a->lastName = $name[1];
+
+		$a->address1 = $address['address_line1'];
+		$a->address2 = $address['address_line2'];
+		$a->city = $address['address_city'];
+		$a->setStateValue($address['address_state']);
+		$a->countryId = Commerce::getInstance()->getCountries()->getCountryByIso(
+			$address['address_country']
+		)->id;
+		$a->zipCode = $address['address_zip'];
+
+		$order->setBillingAddress($a);
 	}
 
 }

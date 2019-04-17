@@ -9,11 +9,8 @@ Place this twig where you want the payments button to appear.
 #### Options
 Pass a twig object as the only parameter to configure the button.
 
-##### `country`
-ISO 2 country code (Stripe needs this for whatever reason).
-
 ##### `items`
-An array of items to buy.
+An array of items to buy. Use this **OR** `cart`.
 
 ##### `items[x].id`
 The ID of the purchasable.
@@ -22,35 +19,46 @@ The ID of the purchasable.
 The Qty being purchased.
 
 ##### `cart`
-A Craft Commerce Order (i.e. the current cart).
+A Craft Commerce Order (i.e. the current cart). Use this **OR** `items`.
 
 ##### `requestShipping`
 A boolean or string. If true a shipping address will be required. Can also be 
-set to one of: `shipping` (default), `delivery`, `pickup`. This will change how 
-the UI refers to the shipping of the products. For example, in English speaking 
-countries you would say "pizza delivery" not "pizza shipping". You must have 
-`shippingMethods` available for this to have any effect.
+set to one of: `'shipping'`, `'delivery'`, `'pickup'`, `true`, `false` (default).
+This will also change how the UI refers to the shipping of the products. For 
+example, in English speaking countries you would say "pizza delivery" not 
+"pizza shipping". Setting this to true will default the working to "shipping".
 
 ##### `requestDetails`
-An array of additional details to request. Any of: `name`, `email`, `phone`.
+An array of additional details to request. Any of: `name`, `email` (email is 
+always collected, so you don't need to add it), `phone`.
 
 ## Example
 ```twig
 {{ craft.webPayments.button({
-    country: 'GB',
     items: [
         { id: product.defaultVariant.id, qty: 1 },
     ],
     requestShipping: 'delivery',
-    requestDetails: ['name', 'email'],
 }) }}
 ```
 
 ```twig
 {{ craft.webPayments.button({
-    country: 'GB',
     cart: craft.commerce.carts.cart,
-    requestShipping: true,
-    requestDetails: ['name', 'email'],
+    requestDetails: ['name', 'phone'],
 }) }}
 ```
+
+## TODO
+- [ ] On payment complete event (i.e. clear active cart, redirect to thanks)
+- [ ] JS hooks to update items (if not using commerce cart)
+- [ ] JS hook to refresh cart data (if using commerce cart)
+- [ ] Option to use default Apple / Google Pay buttons (rather that Stripe's button)
+- [x] Use billing address from Stripe (don't set billing address to shipping)
+- [x] Make shipping address optional
+- [x] Settings:
+  - [x] Select Stripe gateway
+  - [x] Button config defaults
+  - [x] Map request details (name, phone) to order fields
+- [ ] Write setup instructions
+- [ ] Browser test JS
