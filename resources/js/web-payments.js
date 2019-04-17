@@ -23,7 +23,7 @@ async function post ({ actionTrigger, csrf }, action, body) {
 		);
 	});
 
-	return fetch(`${actionTrigger}/web-payments/stripe/${action}`, {
+	return fetch(`/${actionTrigger}/web-payments/stripe/${action}`, {
 		method: 'POST',
 		body: fd,
 		headers: {
@@ -108,13 +108,13 @@ async function onToken (e, state, post) {
 
 		if (state.onComplete.js) {
 			eval(
-				'const cwp = { number: data.number };' +
+				'const cwp = { number: \'' + data.number + '\' };' +
 				state.onComplete.js
 			);
 		}
 
 		if (state.onComplete.redirect)
-			window.location = state.onComplete.redirect;
+			window.location = state.onComplete.redirect.replace('{number}', data.number);
 	} catch (_) {
 		e.complete('fail');
 	}

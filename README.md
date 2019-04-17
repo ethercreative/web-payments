@@ -69,6 +69,10 @@ JavaScript that will be executed once the payment is complete. Has access to the
 ```
 
 ## TODO
+- [ ] When using a cart, actually use the cart to keep fields / options persistent
+  - [ ] Remove cart option (if items isn't set, use active cart)
+  - [ ] Remove clear cart option
+- [ ] Support line item options when using items
 - [x] On payment complete event (i.e. clear active cart, redirect to thanks)
 - [ ] JS hooks to update items (if not using commerce cart)
 - [ ] JS hook to refresh cart data (if using commerce cart)
@@ -81,3 +85,4 @@ JavaScript that will be executed once the payment is complete. Has access to the
   - [x] Map request details (name, phone) to order fields
 - [ ] Write setup instructions
 - [ ] Browser test JS
+- [ ] Test with Commerce Lite
