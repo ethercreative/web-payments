@@ -1,136 +1,181 @@
-class WebPayments {
+// Helpers
+// =============================================================================
 
-	// Properties
-	// =========================================================================
+/**
+ * Posts to Craft
+ *
+ * @param {string} actionTrigger
+ * @param {array} csrf
+ * @param {string} action
+ * @param {Object} body
+ * @return {Promise}
+ */
+async function post ({ actionTrigger, csrf }, action, body) {
+	const fd = new FormData();
+	fd.append(csrf[0], csrf[1]);
 
-	el = null;
-	stripe = null;
-	action = '';
-	csrf = [];
+	Object.keys(body).forEach(function (key) {
+		const value = body[key];
 
-	shippingAddress = null;
-	shippingOption = null;
+		fd.append(
+			key,
+			typeof value === 'object' ? JSON.stringify(value) : value
+		);
+	});
 
-	// Constructor
-	// =========================================================================
-
-	constructor (opts) {
-		this.el = document.getElementById(opts.id);
-		this.stripe = window.Stripe(opts.stripeApiKey);
-		this.action = opts.actionTrigger;
-		this.csrf = opts.csrf;
-
-		// TODO: Pass cart items to server to get actual cart (to ensure prices aren't tampered with)?
-
-		const paymentRequestObject = {
-			country: opts.country.toUpperCase(),
-			currency: opts.currency.toLowerCase(),
-			displayItems: opts.cart.displayItems,
-			total: opts.cart.total,
-			requestShipping: !!opts.requestShipping,
-			shippingType: WebPayments._getShippingType(opts.requestShipping),
-			shippingOptions: opts.shippingMethods,
-			requestPayerName: opts.requestDetails.indexOf('name') > -1,
-			requestPayerEmail: opts.requestDetails.indexOf('email') > -1,
-			requestPayerPhone: opts.requestDetails.indexOf('phone') > -1,
-		};
-
-		const paymentRequest = this.stripe.paymentRequest(paymentRequestObject);
-
-		const elements = this.stripe.elements();
-		const prButton = elements.create('paymentRequestButton', {
-			paymentRequest,
-		});
-
-		(async () => {
-			const result = await paymentRequest.canMakePayment();
-			if (result)
-				prButton.mount(this.el);
-		})();
-
-		paymentRequest.on('shippingaddresschange', this.onShippingChange.bind(this, paymentRequestObject));
-		paymentRequest.on('shippingoptionchange', this.onShippingChange.bind(this, paymentRequestObject));
-		paymentRequest.on('token', this.onGetToken.bind(this, paymentRequestObject));
-	}
-
-	// Events
-	// =========================================================================
-
-	onShippingChange = async (paymentRequest, e) => {
-		try {
-			const response = await fetch(this.actionUrl('shipping/update'), {
-				method: 'POST',
-				body: (() => {
-					const fd = new FormData();
-
-					fd.append(this.csrf[0], this.csrf[1]);
-					fd.append('paymentRequest', JSON.stringify(paymentRequest));
-
-					if (e.hasOwnProperty('shippingOption'))
-						this.shippingOption = e.shippingOption;
-
-					fd.append('shippingOption', JSON.stringify(this.shippingOption));
-
-					if (e.hasOwnProperty('shippingAddress'))
-						this.shippingAddress = e.shippingAddress;
-
-					fd.append('shippingAddress', JSON.stringify(this.shippingAddress));
-
-					return fd;
-				})(),
-				headers: {
-					'Accept': 'application/json',
-					'X-Requested-With': 'XMLHttpRequest',
-				},
-			}).then(res => res.json());
-
-			e.updateWith(response);
-		} catch (_) {
-			e.updateWith({ status: 'fail' });
-		}
-	};
-
-	onGetToken = async (paymentRequest, e) => {
-		try {
-			const res = await fetch(this.actionUrl('order/pay'), {
-				method: 'POST',
-				body: (() => {
-					const fd = new FormData();
-
-					fd.append(this.csrf[0], this.csrf[1]);
-					fd.append('items', JSON.stringify(paymentRequest.displayItems));
-					fd.append('data', JSON.stringify(e));
-
-					return fd;
-				})(),
-				headers: {
-					'Accept': 'application/json',
-					'X-Requested-With': 'XMLHttpRequest',
-				},
-			});
-
-			/*const data = */await res.json();
-
-			e.complete('success');
-		} catch (_) {
-			e.complete('fail');
-		}
-	};
-
-	// Helpers
-	// =========================================================================
-
-	static _getShippingType (requestShipping) {
-		if (typeof requestShipping === 'boolean')
-			return 'shipping';
-
-		return requestShipping;
-	}
-
-	actionUrl (action) {
-		return `${this.action}/web-payments/${action}`;
-	}
-
+	return fetch(`${actionTrigger}/web-payments/stripe/${action}`, {
+		method: 'POST',
+		body: fd,
+		headers: {
+			'Accept': 'application/json',
+			'X-Requested-With': 'XMLHttpRequest',
+		},
+	}).then(function (res) {
+		return res.json();
+	});
 }
 
-window.CraftWebPayments = WebPayments;
+// Events
+// =============================================================================
+
+/**
+ * Handle the changing shipping address
+ *
+ * @param {Object} e
+ * @param {Object} state
+ * @param {Function} post
+ * @return {Promise<void>}
+ */
+async function onShippingAddressChange (e, state, post) {
+	try {
+		const data = await post('update-address', {
+			items: state.items,
+			address: e.shippingAddress,
+		});
+
+		state.update({ shippingAddress: e.shippingAddress });
+		e.updateWith(data);
+	} catch (_) {
+		e.updateWith({ status: 'fail' });
+	}
+}
+
+/**
+ * Handle the changing shipping option
+ *
+ * @param {Object} e
+ * @param {array} state
+ * @param {Function} post
+ * @return {Promise<void>}
+ */
+async function onShippingOptionChange (e, state, post) {
+	try {
+		const data = await post('update-shipping', {
+			items: state.items,
+			address: state.shippingAddress,
+			method: e.shippingOption,
+		});
+
+		state.update({ shippingOption: e.shippingOption });
+		e.updateWith(data);
+	} catch (_) {
+		e.updateWith({ status: 'fail' });
+	}
+}
+
+/**
+ * Handle the Stripe token
+ *
+ * @param {Object} e
+ * @param {Object} state
+ * @param {Function} post
+ * @return {Promise<void>}
+ */
+async function onToken (e, state, post) {
+	try {
+		const data = await post('pay', {
+			items: state.items,
+			token: e.token,
+			payerName: e.payerName,
+			payerEmail: e.payerEmail,
+			payerPhone: e.payerPhone,
+			shippingAddress: e.shippingAddress,
+			shippingMethod: e.shippingOption,
+		});
+
+		e.complete(data.status);
+	} catch (_) {
+		e.complete('fail');
+	}
+}
+
+// Craft Web Payments
+// =============================================================================
+
+window.CraftWebPayments = async function (opts) {
+
+	opts = Object.freeze(opts);
+
+	// Constants
+	// -------------------------------------------------------------------------
+
+	const el          = document.getElementById(opts.id)
+		, stripe      = window.Stripe(opts.stripeApiKey)
+		, postOptions = { actionTrigger: opts.actionTrigger, csrf: opts.csrf };
+
+	const state = {
+		items: opts.cart.items,
+		shippingAddress: null,
+		shippingOption: null,
+
+		update: function (nextState) {
+			Object.keys(nextState).forEach(key => {
+				this[key] = nextState[key];
+			});
+		},
+	};
+
+	// Payment Request
+	// -------------------------------------------------------------------------
+
+	// Build the payment request object
+	const paymentRequest = stripe.paymentRequest({
+		country: opts.country.toUpperCase(),
+		currency: opts.currency.toLowerCase(),
+		displayItems: opts.cart.displayItems,
+		total: opts.cart.total,
+		requestShipping: !!opts.requestShipping,
+		shippingType: typeof opts.requestShipping === 'boolean' ? 'shipping' : opts.requestShipping,
+		shippingOptions: opts.shippingMethods,
+		requestPayerName: opts.requestDetails.indexOf('name') > -1,
+		requestPayerEmail: opts.requestDetails.indexOf('email') > -1,
+		requestPayerPhone: opts.requestDetails.indexOf('phone') > -1,
+	});
+
+	// Don't bother continuing if we can't make the payment
+	if (!await paymentRequest.canMakePayment())
+		return;
+
+	// Create the Stripe payment request button & mount it in place
+	stripe.elements().create('paymentRequestButton', {
+		paymentRequest,
+	}).mount(el);
+
+	// Bind the postOptions to the post function
+	const postInternal = async function (action, body) {
+		return post(postOptions, action, body);
+	};
+
+	// Helper to bind required variables to the event handler
+	const bind = function (handler) {
+		return function (e) {
+			handler(e, state, postInternal);
+		};
+	};
+
+	// Listen for the events
+	paymentRequest.on('shippingaddresschange', bind(onShippingAddressChange));
+	paymentRequest.on('shippingoptionchange', bind(onShippingOptionChange));
+	paymentRequest.on('token', bind(onToken));
+
+};
