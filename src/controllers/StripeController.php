@@ -136,6 +136,7 @@ class StripeController extends Controller
 		$wp      = WebPayments::getInstance()->stripe;
 		$settings= WebPayments::getInstance()->getSettings();
 
+		$clearCart = $request->getBodyParam('clearCart', false);
 		$email = $request->getRequiredBodyParam('payerEmail');
 
 		$requestDetails = [
@@ -238,7 +239,13 @@ class StripeController extends Controller
 			return $this->asJson(['status' => 'fail']);
 		}
 
-		return $this->asJson(['status' => 'success']);
+		if ($clearCart)
+			Commerce::getInstance()->getCarts()->forgetCart();
+
+		return $this->asJson([
+			'status' => 'success',
+			'number' => $order->number,
+		]);
 	}
 
 }

@@ -32,6 +32,20 @@ example, in English speaking countries you would say "pizza delivery" not
 An array of additional details to request. Any of: `name`, `email` (email is 
 always collected, so you don't need to add it), `phone`.
 
+##### `onComplete`
+An object of events to trigger once the payment is complete.
+
+##### `onComplete.redirect`
+A URL to redirect to once the payment is completed. Can include `{number}`, 
+which will output the order number.
+
+##### `onComplete.clearCart`
+If true the currently active cart will be cleared once the payment is complete.
+
+##### `onComplete.js`
+JavaScript that will be executed once the payment is complete. Has access to the 
+`cwp` object. Currently this only has `cwp.number` (the order number).
+
 ## Example
 ```twig
 {{ craft.webPayments.button({
@@ -46,11 +60,16 @@ always collected, so you don't need to add it), `phone`.
 {{ craft.webPayments.button({
     cart: craft.commerce.carts.cart,
     requestDetails: ['name', 'phone'],
+    onComplete: {
+        redirect: '/thanks?number={number}',
+        clearCart: false,
+        js: 'window.paymentCompleted(cwp.number);',
+    },
 }) }}
 ```
 
 ## TODO
-- [ ] On payment complete event (i.e. clear active cart, redirect to thanks)
+- [x] On payment complete event (i.e. clear active cart, redirect to thanks)
 - [ ] JS hooks to update items (if not using commerce cart)
 - [ ] JS hook to refresh cart data (if using commerce cart)
 - [ ] Option to use default Apple / Google Pay buttons (rather that Stripe's button)

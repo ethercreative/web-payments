@@ -17,6 +17,9 @@ use craft\commerce\Plugin as Commerce;
 use ether\webpayments\models\Settings;
 use ether\webpayments\services\StripeService;
 use ether\webpayments\web\Variable;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
 use yii\base\Event;
 use yii\base\InvalidConfigException;
 
@@ -65,6 +68,12 @@ class WebPayments extends Plugin
 		return new Settings();
 	}
 
+	/**
+	 * @return string|null
+	 * @throws LoaderError
+	 * @throws RuntimeError
+	 * @throws SyntaxError
+	 */
 	protected function settingsHtml ()
 	{
 		$gateways = [];

@@ -101,10 +101,20 @@ async function onToken (e, state, post) {
 			payerPhone: e.payerPhone,
 			shippingAddress: e.shippingAddress,
 			shippingMethod: e.shippingOption,
+			clearCart: state.onComplete.clearCart,
 		});
 
-		// TODO: Handle on completion events (i.e. clear active cart & redirect)
 		e.complete(data.status);
+
+		if (state.onComplete.js) {
+			eval(
+				'const cwp = { number: data.number };' +
+				state.onComplete.js
+			);
+		}
+
+		if (state.onComplete.redirect)
+			window.location = state.onComplete.redirect;
 	} catch (_) {
 		e.complete('fail');
 	}
@@ -128,6 +138,7 @@ window.CraftWebPayments = async function (opts) {
 		items: opts.cart.items,
 		shippingAddress: null,
 		shippingOption: null,
+		onComplete: opts.onComplete,
 
 		update: function (nextState) {
 			Object.keys(nextState).forEach(key => {

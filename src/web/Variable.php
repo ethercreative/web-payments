@@ -73,6 +73,8 @@ class Variable
 			'requestShipping' => $settings->requestShipping === 'no' ? false : $settings->requestShipping,
 
 			'stripeApiKey' => $wp->getStripeGateway()->settings['publishableKey'],
+
+			'onComplete' => [],
 		], $options);
 
 		$options['cart'] = $cart;
