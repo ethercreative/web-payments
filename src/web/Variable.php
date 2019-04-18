@@ -81,6 +81,9 @@ class Variable
 
 		$options['cart'] = $cart;
 
+		if (is_string($options['requestDetails']))
+			$options['requestDetails'] = [$options['requestDetails']];
+
 		if (!in_array('email', $options['requestDetails']))
 			$options['requestDetails'][] = 'email';
 

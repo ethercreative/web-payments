@@ -139,4 +139,4 @@ Note that you can't update the button while the payment dialog is active.
 - [ ] Browser test JS
 - [x] Test with Commerce Lite
 - [ ] Add flag to order marking this as an order completed via web payments
-- [ ] Test with Subscriptions
+- [ ] Add subscription support

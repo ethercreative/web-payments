@@ -272,6 +272,10 @@ class StripeController extends Controller
 			return $this->asJson(['status' => 'fail']);
 		}
 
+		Craft::$app->getDb()->createCommand()
+			->insert('{{%web_payments}}', ['orderId' => $order->id])
+			->execute();
+
 		return $this->asJson([
 			'status' => 'success',
 			'number' => $order->number,
