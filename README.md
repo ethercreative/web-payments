@@ -3,6 +3,16 @@
 Use the Web Payments API and Apply Pay to vastly improve your checkout process!
 
 ## Usage
+### Setup
+After installing the plugin:
+
+1. Create a [Stripe payment gateway](https://plugins.craftcms.com/commerce-stripe).
+2. Select the gateway in the plugin options.
+3. Register your domain with Stripe and Apple Pay (Simply add your domain [here](https://dashboard.stripe.com/account/apple_pay)).
+4. Output the button where ever you want using the template tag below.
+5. ???
+6. Profit.
+
 ### `{{ craft.webPayments.button(options) }}`
 Place this twig where you want the payments button to appear.
 
@@ -135,8 +145,8 @@ Note that you can't update the button while the payment dialog is active.
   - [x] Select Stripe gateway
   - [x] Button config defaults
   - [x] Map request details (name, phone) to order fields
-- [ ] Write setup instructions
+- [x] Write setup instructions
 - [ ] Browser test JS
 - [x] Test with Commerce Lite
-- [ ] Add flag to order marking this as an order completed via web payments
+- [x] Add flag to order marking this as an order completed via web payments
 - [ ] Add subscription support

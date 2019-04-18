@@ -75,19 +75,6 @@ class Comparison extends Widget
 	// Helpers
 	// =========================================================================
 
-	private static function _pie ($wpFill, $rcFill)
-	{
-		$p = self::_getPercentage();
-
-		/** @noinspection HtmlUnknownAttribute */
-		$mk = '<svg viewBox=\'-1 -1 2 2\' style=\'transform:rotate(-90deg)\'>';
-		$mk .= self::_slice(0, $p, $wpFill);
-		$mk .= self::_slice($p, 1, $rcFill);
-		$mk .= '</svg>';
-
-		return $mk;
-	}
-
 	private static function _getPercentage ()
 	{
 		static $p;
@@ -102,7 +89,7 @@ class Comparison extends Widget
 				'[[orders.id]] = [[elements.id]]'
 			)
 			->where([
-				'orders.isCompleted' => '1',
+				'orders.isCompleted'   => '1',
 				'elements.dateDeleted' => null,
 			])
 			->count();
@@ -117,6 +104,19 @@ class Comparison extends Widget
 			->count();
 
 		return $p = $wp / $total;
+	}
+
+	private static function _pie ($wpFill, $rcFill)
+	{
+		$p = self::_getPercentage();
+
+		/** @noinspection HtmlUnknownAttribute */
+		$mk = '<svg viewBox=\'-1 -1 2 2\' style=\'transform:rotate(-90deg)\'>';
+		$mk .= self::_slice(0, $p, $wpFill);
+		$mk .= self::_slice($p, 1, $rcFill);
+		$mk .= '</svg>';
+
+		return $mk;
 	}
 
 	private static function _slice ($s, $e, $fill)

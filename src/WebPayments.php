@@ -87,7 +87,7 @@ class WebPayments extends Plugin
 	 */
 	protected function settingsHtml ()
 	{
-		$gateways = [];
+		$gateways = [null => '---'];
 
 		foreach (Commerce::getInstance()->getGateways()->getAllCustomerEnabledGateways() as $gateway)
 		{
@@ -97,9 +97,7 @@ class WebPayments extends Plugin
 			$gateways[$gateway->uid] = $gateway->name;
 		}
 
-		$fields = [
-			null => '---',
-		];
+		$fields = [null => '---'];
 
 		foreach (Craft::$app->getFields()->getAllFields() as $field)
 		{
