@@ -47,6 +47,17 @@ JavaScript that will be executed once the payment is complete. Has access to the
 The variable the button will be set to in JS. Useful if you want to dynamically
 update the items in the virtual cart.
 
+##### `style`
+Customize the appearance of the button:
+
+```js
+{
+    type: 'default' | 'donate' | 'buy', // default: 'default'
+    theme: 'dark' | 'light' | 'light-outline', // default: 'dark'
+    height: '64px', // default: '40px', the width is always '100%'
+}
+```
+
 ## Example
 ```twig
 {{ craft.webPayments.button({

@@ -210,6 +210,9 @@ window.CraftWebPayments = function (opts) {
 		// Create the Stripe payment request button & mount it in place
 		stripe.elements().create('paymentRequestButton', {
 			paymentRequest,
+			style: {
+				paymentRequestButton: opts.style,
+			},
 		}).mount(el);
 
 		// Helper to bind required variables to the event handler
