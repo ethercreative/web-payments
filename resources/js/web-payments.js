@@ -49,6 +49,7 @@ async function post ({ actionTrigger, csrf }, action, body) {
 async function onShippingAddressChange (e, state, post) {
 	try {
 		const data = await post('update-address', {
+			cartId: state.cartId,
 			items: state.items,
 			address: e.shippingAddress,
 		});
@@ -71,6 +72,7 @@ async function onShippingAddressChange (e, state, post) {
 async function onShippingOptionChange (e, state, post) {
 	try {
 		const data = await post('update-shipping', {
+			cartId: state.cartId,
 			items: state.items,
 			address: state.shippingAddress,
 			method: e.shippingOption,
@@ -94,6 +96,7 @@ async function onShippingOptionChange (e, state, post) {
 async function onToken (e, state, post) {
 	try {
 		const data = await post('pay', {
+			cartId: state.cartId,
 			items: state.items,
 			token: e.token,
 			payerName: e.payerName,
@@ -101,7 +104,6 @@ async function onToken (e, state, post) {
 			payerPhone: e.payerPhone,
 			shippingAddress: e.shippingAddress,
 			shippingMethod: e.shippingOption,
-			clearCart: state.onComplete.clearCart,
 		});
 
 		e.complete(data.status);
@@ -135,6 +137,7 @@ window.CraftWebPayments = async function (opts) {
 		, postOptions = { actionTrigger: opts.actionTrigger, csrf: opts.csrf };
 
 	const state = {
+		cartId: opts.cart.id,
 		items: opts.cart.items,
 		shippingAddress: null,
 		shippingOption: null,

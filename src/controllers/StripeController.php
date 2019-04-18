@@ -50,6 +50,8 @@ class StripeController extends Controller
 		$request = Craft::$app->getRequest();
 		$wp      = WebPayments::getInstance()->stripe;
 
+		$cartId = $request->getRequiredBodyParam('cartId');
+
 		$items = Json::decodeIfJson(
 			$request->getRequiredBodyParam('items'),
 			true
@@ -60,7 +62,7 @@ class StripeController extends Controller
 			true
 		);
 
-		$order = $wp->buildOrder($items);
+		$order = $wp->buildOrder($cartId, $items);
 		$wp->setShippingAddress($order, $address);
 
 		if (!$order->shippingAddress->validate())
@@ -92,6 +94,8 @@ class StripeController extends Controller
 		$request = Craft::$app->getRequest();
 		$wp      = WebPayments::getInstance()->stripe;
 
+		$cartId = $request->getRequiredBodyParam('cartId');
+
 		$items = Json::decodeIfJson(
 			$request->getRequiredBodyParam('items'),
 			true
@@ -107,7 +111,7 @@ class StripeController extends Controller
 			true
 		);
 
-		$order = $wp->buildOrder($items);
+		$order = $wp->buildOrder($cartId, $items);
 		$wp->setShippingAddress($order, $address);
 		$order->shippingMethodHandle = $method['id'];
 
@@ -136,7 +140,7 @@ class StripeController extends Controller
 		$wp      = WebPayments::getInstance()->stripe;
 		$settings= WebPayments::getInstance()->getSettings();
 
-		$clearCart = $request->getBodyParam('clearCart', false);
+		$cartId = $request->getRequiredBodyParam('cartId');
 		$email = $request->getRequiredBodyParam('payerEmail');
 
 		$requestDetails = [
@@ -166,7 +170,7 @@ class StripeController extends Controller
 			true
 		);
 
-		$order = $wp->buildOrder($items, true);
+		$order = $wp->buildOrder($cartId, $items, true);
 		$wp->setBillingAddress($order, $token, $name);
 
 		if (!empty($address))
@@ -216,7 +220,6 @@ class StripeController extends Controller
 		$paymentForm = $gateway->getPaymentFormModel();
 		$paymentForm->setAttributes([
 			'token' => $token['id'],
-			// TODO: Account for 3D Secure (do we need to?)
 		], false);
 
 		if ($paymentSource)
@@ -238,9 +241,6 @@ class StripeController extends Controller
 		} catch (Throwable $e) {
 			return $this->asJson(['status' => 'fail']);
 		}
-
-		if ($clearCart)
-			Commerce::getInstance()->getCarts()->forgetCart();
 
 		return $this->asJson([
 			'status' => 'success',

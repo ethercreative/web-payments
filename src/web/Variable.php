@@ -33,8 +33,6 @@ class Variable
 	/**
 	 * Render the payment button
 	 *
-	 * TODO: Add on completion events (i.e. clear active cart & redirect)
-	 *
 	 * @param array $options
 	 *
 	 * @return string
@@ -56,10 +54,9 @@ class Variable
 
 		$cart = $this->_getCart($options);
 
-		if ($cart === null || empty($cart['items']))
+		if ($cart === null || empty($cart['items']) && empty($cart['cartId']))
 			return null;
 
-		// TODO: Make default options configurable in plugin settings
 		$options = array_merge([
 			'id' => $id,
 			'csrf' => [$general->csrfTokenName, $request->getCsrfToken()],
@@ -112,7 +109,7 @@ class Variable
 			return $wp->orderToPaymentRequest($options['cart'], true);
 
 		if (array_key_exists('items', $options))
-			return $wp->orderToPaymentRequest($wp->buildOrder($options['items']), true);
+			return $wp->orderToPaymentRequest($wp->buildOrder(null, $options['items']), true);
 
 		return null;
 	}

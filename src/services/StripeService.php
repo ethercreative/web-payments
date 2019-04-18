@@ -21,6 +21,7 @@ use craft\commerce\Plugin as Commerce;
 use craft\db\Query;
 use craft\errors\ElementNotFoundException;
 use craft\errors\SiteNotFoundException;
+use craft\helpers\Json;
 use ether\webpayments\WebPayments;
 use Throwable;
 use yii\base\Exception;
@@ -60,17 +61,23 @@ class StripeService extends Component
 	/**
 	 * Build an Order from the given array of items
 	 *
+	 * @param int|null $cartId
 	 * @param array $items - An array of arrays: ['id' => purchasableId, 'qty' => qty]
 	 * @param bool  $save
 	 *
 	 * @return Order
-	 * @throws Throwable
 	 * @throws ElementNotFoundException
-	 * @throws SiteNotFoundException
 	 * @throws Exception
+	 * @throws SiteNotFoundException
+	 * @throws Throwable
 	 */
-	public function buildOrder (array $items, $save = false)
+	public function buildOrder ($cartId, array $items, $save = false)
 	{
+		$cartId = Json::decodeIfJson($cartId);
+
+		if ($cartId)
+			return Commerce::getInstance()->getOrders()->getOrderById($cartId);
+
 		$craft = Craft::$app;
 		$elements = $craft->getElements();
 		$commerce = Commerce::getInstance();
@@ -94,6 +101,8 @@ class StripeService extends Component
 			$li = new LineItem();
 			$li->setPurchasable($purchasable);
 			$li->qty = $item['qty'];
+			if (array_key_exists('options', $item))
+				$li->setOptions($item['options']);
 			$li->refreshFromPurchasable();
 
 			if ($save)
@@ -147,6 +156,7 @@ class StripeService extends Component
 			$items[] = [
 				'id' => $item->purchasableId,
 				'qty' => $item->qty,
+				'options' => $item->getOptions(),
 			];
 
 			$displayItems[] = [
@@ -170,6 +180,7 @@ class StripeService extends Component
 		}
 
 		$ret = [
+			'id'              => $order->id,
 			'displayItems'    => $displayItems,
 			'total'           => [
 				'label'  => Craft::t('commerce', 'Total'),

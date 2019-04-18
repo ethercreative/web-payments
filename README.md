@@ -39,9 +39,6 @@ An object of events to trigger once the payment is complete.
 A URL to redirect to once the payment is completed. Can include `{number}`, 
 which will output the order number.
 
-##### `onComplete.clearCart`
-If true the currently active cart will be cleared once the payment is complete.
-
 ##### `onComplete.js`
 JavaScript that will be executed once the payment is complete. Has access to the 
 `cwp` object. Currently this only has `cwp.number` (the order number).
@@ -50,7 +47,13 @@ JavaScript that will be executed once the payment is complete. Has access to the
 ```twig
 {{ craft.webPayments.button({
     items: [
-        { id: product.defaultVariant.id, qty: 1 },
+        { 
+            id: product.defaultVariant.id, 
+            qty: 1,
+            options: {
+                giftWrapped: 'yes',
+            },
+         },
     ],
     requestShipping: 'delivery',
 }) }}
@@ -62,17 +65,16 @@ JavaScript that will be executed once the payment is complete. Has access to the
     requestDetails: ['name', 'phone'],
     onComplete: {
         redirect: '/thanks?number={number}',
-        clearCart: false,
         js: 'window.paymentCompleted(cwp.number);',
     },
 }) }}
 ```
 
 ## TODO
-- [ ] When using a cart, actually use the cart to keep fields / options persistent
-  - [ ] Remove cart option (if items isn't set, use active cart)
-  - [ ] Remove clear cart option
-- [ ] Support line item options when using items
+- [x] When using a cart, actually use the cart to keep fields / options persistent
+  - [x] Remove cart option (if items isn't set, use active cart)
+  - [x] Remove clear cart option
+- [x] Support line item options when using items
 - [x] On payment complete event (i.e. clear active cart, redirect to thanks)
 - [ ] JS hooks to update items (if not using commerce cart)
 - [ ] JS hook to refresh cart data (if using commerce cart)
