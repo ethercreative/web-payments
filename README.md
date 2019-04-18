@@ -103,6 +103,10 @@ modifying them.
 If you passed in a cart you can simply call `refresh()` to update the button 
 with the latest contents of the cart.
 
+```js
+window.payButton.refresh();
+```
+
 Note that you can't update the button while the payment dialog is active.
 
 ## TODO
