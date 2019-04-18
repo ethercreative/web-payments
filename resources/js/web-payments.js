@@ -35,6 +35,35 @@ async function post ({ actionTrigger, csrf }, action, body) {
 	});
 }
 
+// Actions
+// =============================================================================
+
+/**
+ * Update the items in the virtual cart
+ *
+ * @param items
+ * @param state
+ * @param paymentRequest
+ * @param post
+ * @return {Promise<void>}
+ */
+async function updateItems (items, state, paymentRequest, post) {
+	try {
+		const {
+			total, displayItems, shippingOptions
+		} = await post('update-display-items', {
+			cartId: state.cartId,
+			items,
+		});
+
+		state.update({ items });
+
+		paymentRequest.update({ total, displayItems, shippingOptions });
+	} catch (e) {
+		throw e;
+	}
+}
+
 // Events
 // =============================================================================
 
@@ -125,7 +154,10 @@ async function onToken (e, state, post) {
 // Craft Web Payments
 // =============================================================================
 
-window.CraftWebPayments = async function (opts) {
+/**
+ * @return {null|Object}
+ */
+window.CraftWebPayments = function (opts) {
 
 	opts = Object.freeze(opts);
 
@@ -167,30 +199,47 @@ window.CraftWebPayments = async function (opts) {
 		requestPayerPhone: opts.requestDetails.indexOf('phone') > -1,
 	});
 
-	// Don't bother continuing if we can't make the payment
-	if (!await paymentRequest.canMakePayment())
-		return;
-
-	// Create the Stripe payment request button & mount it in place
-	stripe.elements().create('paymentRequestButton', {
-		paymentRequest,
-	}).mount(el);
-
 	// Bind the postOptions to the post function
 	const postInternal = async function (action, body) {
 		return post(postOptions, action, body);
 	};
 
-	// Helper to bind required variables to the event handler
-	const bind = function (handler) {
-		return function (e) {
-			handler(e, state, postInternal);
-		};
-	};
+	// Ensure we can actually make payment
+	paymentRequest.canMakePayment().then(function () {
 
-	// Listen for the events
-	paymentRequest.on('shippingaddresschange', bind(onShippingAddressChange));
-	paymentRequest.on('shippingoptionchange', bind(onShippingOptionChange));
-	paymentRequest.on('token', bind(onToken));
+		// Create the Stripe payment request button & mount it in place
+		stripe.elements().create('paymentRequestButton', {
+			paymentRequest,
+		}).mount(el);
+
+		// Helper to bind required variables to the event handler
+		const bind = function (handler) {
+			return function (e) {
+				handler(e, state, postInternal);
+			};
+		};
+
+		// Listen for the events
+		paymentRequest.on('shippingaddresschange', bind(onShippingAddressChange));
+		paymentRequest.on('shippingoptionchange', bind(onShippingOptionChange));
+		paymentRequest.on('token', bind(onToken));
+
+	}).catch(console.error); // eslint-disable-line no-console
+
+	return Object.freeze({
+		get items () {
+			return Object.freeze(state.items.map(function (item) {
+				return Object.freeze(item);
+			}));
+		},
+
+		set items (items) {
+			updateItems(items, state, paymentRequest, postInternal);
+		},
+
+		refresh () {
+			updateItems(null, state, paymentRequest, postInternal);
+		},
+	});
 
 };

@@ -43,6 +43,10 @@ which will output the order number.
 JavaScript that will be executed once the payment is complete. Has access to the 
 `cwp` object. Currently this only has `cwp.number` (the order number).
 
+##### `js`
+The variable the button will be set to in JS. Useful if you want to dynamically
+update the items in the virtual cart.
+
 ## Example
 ```twig
 {{ craft.webPayments.button({
@@ -56,6 +60,7 @@ JavaScript that will be executed once the payment is complete. Has access to the
          },
     ],
     requestShipping: 'delivery',
+    js: 'window.pay_item_' ~ product.id,
 }) }}
 ```
 
@@ -70,14 +75,44 @@ JavaScript that will be executed once the payment is complete. Has access to the
 }) }}
 ```
 
+## Dynamic Updating
+You can dynamically update the button via JS. 
+
+Use the `js` option to define the variable you want the button to be bound to:
+
+```twig
+{{ craft.webPayments.button({
+    items: [{ id: 1, qty: 1 }],
+    js: 'window.payButton',
+}) }}
+```
+
+You can then get the current items and update them:
+
+```js
+const items = [ ...window.payButton.items ];
+items[0].options = { giftWrapped: 'yes' };
+window.payButton.items = items;
+```
+
+You **can't** update the items directly (i.e. `window.payButton.items[0].id = 2`). 
+The `items` are immutable, and therefore must be set to a new array if you want 
+to update them. Above we are cloning the existing items into a new array before 
+modifying them.
+
+If you passed in a cart you can simply call `refresh()` to update the button 
+with the latest contents of the cart.
+
+Note that you can't update the button while the payment dialog is active.
+
 ## TODO
 - [x] When using a cart, actually use the cart to keep fields / options persistent
   - [x] Remove cart option (if items isn't set, use active cart)
   - [x] Remove clear cart option
 - [x] Support line item options when using items
 - [x] On payment complete event (i.e. clear active cart, redirect to thanks)
-- [ ] JS hooks to update items (if not using commerce cart)
-- [ ] JS hook to refresh cart data (if using commerce cart)
+- [x] JS hooks to update items (if not using commerce cart)
+- [x] JS hook to refresh cart data (if using commerce cart)
 - [ ] Option to use default Apple / Google Pay buttons (rather that Stripe's button)
 - [x] Use billing address from Stripe (don't set billing address to shipping)
 - [x] Make shipping address optional

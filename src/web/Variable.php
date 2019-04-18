@@ -54,8 +54,12 @@ class Variable
 
 		$cart = $this->_getCart($options);
 
-		if ($cart === null || empty($cart['items']) && empty($cart['cartId']))
+		if ($cart === null || empty($cart['items']))
 			return null;
+
+		$jsVariable = '';
+		if (!empty($options['js']))
+			$jsVariable = $options['js'] . '=';
 
 		$options = array_merge([
 			'id' => $id,
@@ -82,7 +86,7 @@ class Variable
 		$view->registerAssetBundle(WebPaymentsAsset::class);
 		$view->registerJsFile('https://js.stripe.com/v3/');
 		$view->registerJs(
-			'CraftWebPayments(' . json_encode($options) . ');',
+			$jsVariable . 'CraftWebPayments(' . json_encode($options) . ');',
 			View::POS_END
 		);
 

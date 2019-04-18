@@ -36,6 +36,36 @@ class StripeController extends Controller
 
 	/**
 	 * @return Response
+	 * @throws BadRequestHttpException
+	 * @throws ElementNotFoundException
+	 * @throws Exception
+	 * @throws SiteNotFoundException
+	 * @throws Throwable
+	 */
+	public function actionUpdateDisplayItems ()
+	{
+		$this->requireAcceptsJson();
+		$this->requirePostRequest();
+
+		$request = Craft::$app->getRequest();
+		$wp = WebPayments::getInstance()->stripe;
+
+		$cartId = $request->getRequiredBodyParam('cartId');
+
+		$items = Json::decodeIfJson(
+			$request->getRequiredBodyParam('items'),
+			true
+		);
+
+		return $this->asJson(
+			$wp->orderToPaymentRequest(
+				$wp->buildOrder($cartId, $items ?: [])
+			)
+		);
+	}
+
+	/**
+	 * @return Response
 	 * @throws Throwable
 	 * @throws ElementNotFoundException
 	 * @throws SiteNotFoundException
