@@ -91,7 +91,7 @@ class Variable
 			View::POS_END
 		);
 
-		return new Markup('<span id="' . $id . '"></span>', 'utf8');
+		return new Markup('<div id="' . $id . '"></div>', 'utf8');
 	}
 
 	// Helpers
