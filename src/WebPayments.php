@@ -11,12 +11,15 @@ namespace ether\webpayments;
 use Craft;
 use craft\base\Model;
 use craft\base\Plugin;
+use craft\events\RegisterComponentTypesEvent;
 use craft\fields\PlainText;
+use craft\services\Dashboard;
 use craft\web\twig\variables\CraftVariable;
 use craft\commerce\Plugin as Commerce;
 use ether\webpayments\models\Settings;
 use ether\webpayments\services\StripeService;
 use ether\webpayments\web\Variable;
+use ether\webpayments\widgets\Comparison;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
@@ -49,6 +52,8 @@ class WebPayments extends Plugin
 			'stripe' => StripeService::class,
 		]);
 
+		Craft::setAlias('@webPayments', __DIR__);
+
 		// Events
 		// ---------------------------------------------------------------------
 
@@ -56,6 +61,12 @@ class WebPayments extends Plugin
 			CraftVariable::class,
 			CraftVariable::EVENT_INIT,
 			[$this, 'onRegisterVariable']
+		);
+
+		Event::on(
+			Dashboard::class,
+			Dashboard::EVENT_REGISTER_WIDGET_TYPES,
+			[$this, 'onRegisterWidgets']
 		);
 
 	}
@@ -126,6 +137,19 @@ class WebPayments extends Plugin
 		/** @var CraftVariable $variable */
 		$variable = $event->sender;
 		$variable->set('webPayments', Variable::class);
+	}
+
+	public function onRegisterWidgets (RegisterComponentTypesEvent $event)
+	{
+		$event->types[] = Comparison::class;
+	}
+
+	// Helpers
+	// =========================================================================
+
+	public static function t ($message, $params = [])
+	{
+		return Craft::t('web-payments', $message, $params);
 	}
 
 }

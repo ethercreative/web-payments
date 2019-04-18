@@ -1,6 +1,10 @@
 <?php
 
 return [
+
+	// Settings
+	// =========================================================================
+
 	'Gateway' => 'Gateway',
 	'The gateway web payments should use (currently requires a Stripe gateway).' =>
 		'The gateway web payments should use (currently requires a Stripe gateway).',
@@ -21,4 +25,12 @@ return [
 
 	'Request Details Fields' => 'Request Details Fields',
 	'Map the additional details to fields on the order.' => 'Map the additional details to fields on the order.',
+
+	// Widgets
+	// =========================================================================
+
+	'Web Payment Comparison' => 'Web Payment Comparison',
+	'Number of **{wp} Web Payments ({wpCount})** vs **{rc} Regular Checkouts ({rcCount})**' =>
+		'Number of **{wp} Web Payments ({wpCount})** vs **{rc} Regular Checkouts ({rcCount})**',
+
 ];
