@@ -10,7 +10,7 @@
  * @param {Object} body
  * @return {Promise}
  */
-async function post ({ actionTrigger, csrf }, action, body) {
+function post ({ actionTrigger, csrf }, action, body) {
 	const fd = new FormData();
 	fd.append(csrf[0], csrf[1]);
 
@@ -45,23 +45,17 @@ async function post ({ actionTrigger, csrf }, action, body) {
  * @param state
  * @param paymentRequest
  * @param post
- * @return {Promise<void>}
  */
-async function updateItems (items, state, paymentRequest, post) {
-	try {
-		const {
-			total, displayItems, shippingOptions
-		} = await post('update-display-items', {
-			cartId: state.cartId,
-			items,
-		});
-
+function updateItems (items, state, paymentRequest, post) {
+	post('update-display-items', {
+		cartId: state.cartId,
+		items,
+	}).then(({ total, displayItems, shippingOptions }) => {
 		state.update({ items });
-
 		paymentRequest.update({ total, displayItems, shippingOptions });
-	} catch (e) {
+	}).catch(e => {
 		throw e;
-	}
+	});
 }
 
 // Events
@@ -73,21 +67,18 @@ async function updateItems (items, state, paymentRequest, post) {
  * @param {Object} e
  * @param {Object} state
  * @param {Function} post
- * @return {Promise<void>}
  */
-async function onShippingAddressChange (e, state, post) {
-	try {
-		const data = await post('update-address', {
-			cartId: state.cartId,
-			items: state.items,
-			address: e.shippingAddress,
-		});
-
+function onShippingAddressChange (e, state, post) {
+	post('update-address', {
+		cartId: state.cartId,
+		items: state.items,
+		address: e.shippingAddress,
+	}).then(data => {
 		state.update({ shippingAddress: e.shippingAddress });
 		e.updateWith(data);
-	} catch (_) {
+	}).catch(() => {
 		e.updateWith({ status: 'fail' });
-	}
+	});
 }
 
 /**
@@ -96,22 +87,19 @@ async function onShippingAddressChange (e, state, post) {
  * @param {Object} e
  * @param {array} state
  * @param {Function} post
- * @return {Promise<void>}
  */
-async function onShippingOptionChange (e, state, post) {
-	try {
-		const data = await post('update-shipping', {
-			cartId: state.cartId,
-			items: state.items,
-			address: state.shippingAddress,
-			method: e.shippingOption,
-		});
-
+function onShippingOptionChange (e, state, post) {
+	post('update-shipping', {
+		cartId: state.cartId,
+		items: state.items,
+		address: state.shippingAddress,
+		method: e.shippingOption,
+	}).then(data => {
 		state.update({ shippingOption: e.shippingOption });
 		e.updateWith(data);
-	} catch (_) {
+	}).catch(() => {
 		e.updateWith({ status: 'fail' });
-	}
+	});
 }
 
 /**
@@ -120,21 +108,18 @@ async function onShippingOptionChange (e, state, post) {
  * @param {Object} e
  * @param {Object} state
  * @param {Function} post
- * @return {Promise<void>}
  */
-async function onToken (e, state, post) {
-	try {
-		const data = await post('pay', {
-			cartId: state.cartId,
-			items: state.items,
-			token: e.token,
-			payerName: e.payerName,
-			payerEmail: e.payerEmail,
-			payerPhone: e.payerPhone,
-			shippingAddress: e.shippingAddress,
-			shippingMethod: e.shippingOption,
-		});
-
+function onToken (e, state, post) {
+	post('pay', {
+		cartId: state.cartId,
+		items: state.items,
+		token: e.token,
+		payerName: e.payerName,
+		payerEmail: e.payerEmail,
+		payerPhone: e.payerPhone,
+		shippingAddress: e.shippingAddress,
+		shippingMethod: e.shippingOption,
+	}).then(data => {
 		e.complete(data.status);
 
 		if (state.onComplete.js) {
@@ -146,9 +131,9 @@ async function onToken (e, state, post) {
 
 		if (state.onComplete.redirect)
 			window.location = state.onComplete.redirect.replace('{number}', data.number);
-	} catch (_) {
+	}).catch(() => {
 		e.complete('fail');
-	}
+	});
 }
 
 // Craft Web Payments
@@ -200,7 +185,7 @@ window.CraftWebPayments = function (opts) {
 	});
 
 	// Bind the postOptions to the post function
-	const postInternal = async function (action, body) {
+	const postInternal = function (action, body) {
 		return post(postOptions, action, body);
 	};
 
