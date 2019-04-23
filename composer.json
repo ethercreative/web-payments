@@ -1,7 +1,7 @@
 {
   "name": "ether/web-payments",
-  "description": "Use the Web Payments API and Apply Pay to vastly improve your checkout process!",
-  "version": "1.0.0",
+  "description": "Use the Web Payments API and Google / Apply Pay to vastly improve your checkout process!",
+  "version": "1.0.1",
   "type": "craft-plugin",
   "keywords": [
     "payments",

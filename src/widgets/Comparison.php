@@ -8,10 +8,14 @@
 
 namespace ether\webpayments\widgets;
 
+use Craft;
 use craft\base\Widget;
 use craft\db\Query;
+use craft\helpers\FileHelper;
 use ether\webpayments\WebPayments;
 use Twig\Markup;
+use yii\base\ErrorException;
+use yii\base\Exception;
 use yii\helpers\Markdown;
 
 /**
@@ -36,13 +40,25 @@ class Comparison extends Widget
 		return WebPayments::t('Web Payment Comparison');
 	}
 
+	/**
+	 * @return mixed|string|null
+	 * @throws Exception
+	 * @throws ErrorException
+	 */
 	public static function iconPath ()
 	{
-		return str_replace(
-			'#b9bfc6\'',
-			'#b9bfc6\' style=\'fill:#b9bfc6!important\'',
-			self::_pie('#8f98a3', '#b9bfc6')
+		$path = Craft::$app->path->getStoragePath() . "/web-payments/comparison.svg";
+
+		FileHelper::writeToFile(
+			$path,
+			str_replace(
+				'#b9bfc6\'',
+				'#b9bfc6\' style=\'fill:#b9bfc6!important\'',
+				self::_pie('#8f98a3', '#b9bfc6')
+			)
 		);
+
+		return $path;
 	}
 
 	public function getBodyHtml ()
