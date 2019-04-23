@@ -2,7 +2,7 @@
 
 # Web Payments for Craft Commerce
 
-Use the Web Payments API and Apply Pay to vastly improve your checkout process!
+Use the Web Payments API and Apply & Google Pay to vastly improve your checkout process!
 
 ## Usage
 ### Setup
