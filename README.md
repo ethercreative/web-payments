@@ -1,3 +1,5 @@
+![Web Payments](./resources/imgs/banner.jpg)
+
 # Web Payments for Craft Commerce
 
 Use the Web Payments API and Apply Pay to vastly improve your checkout process!
