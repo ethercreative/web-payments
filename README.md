@@ -146,7 +146,7 @@ Note that you can't update the button while the payment dialog is active.
   - [x] Button config defaults
   - [x] Map request details (name, phone) to order fields
 - [x] Write setup instructions
-- [ ] Browser test JS
+- [x] Browser test JS
 - [x] Test with Commerce Lite
 - [x] Add flag to order marking this as an order completed via web payments
 - [ ] Add subscription support
