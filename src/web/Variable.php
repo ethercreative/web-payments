@@ -63,7 +63,8 @@ class Variable
 		if (!empty($options['js']))
 			$jsVariable = $options['js'] . '=';
 
-		$gatewayType = explode('\\', get_class($wp->getStripeGateway()));
+		$gateway = $wp->getStripeGateway();
+		$gatewayType = explode('\\', get_class($gateway));
 		$gatewayType = end($gatewayType);
 
 		$options = array_merge([
@@ -81,7 +82,7 @@ class Variable
 			'onComplete' => [],
 
 			'stripeGatewayType' => $gatewayType,
-			'stripeApiKey' => $wp->getStripeGateway()->settings['publishableKey'],
+			'stripeApiKey' => Craft::parseEnv($gateway->settings['publishableKey']),
 			'style' => [],
 		], $options);
 

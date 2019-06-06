@@ -1,3 +1,7 @@
+## 1.0.2.1 - 2019-06-06
+### Fixed
+- Fix env variables not being parsed
+
 ## 1.0.2 - 2019-06-06
 ### Added
 - Add support for Stripe Payment Intents
