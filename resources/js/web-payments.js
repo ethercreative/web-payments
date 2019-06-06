@@ -136,6 +136,18 @@ function onToken (e, state, post) {
 	});
 }
 
+/**
+ * Handle the PaymentIntent response
+ *
+ * @param {Object} e
+ * @param {Object} state
+ * @param {Function} post
+ */
+function onPaymentMethod (e, state, post) {
+	e.token = e.paymentMethod;
+	onToken(e, state, post);
+}
+
 // Craft Web Payments
 // =============================================================================
 
@@ -210,7 +222,11 @@ window.CraftWebPayments = function (opts) {
 		// Listen for the events
 		paymentRequest.on('shippingaddresschange', bind(onShippingAddressChange));
 		paymentRequest.on('shippingoptionchange', bind(onShippingOptionChange));
-		paymentRequest.on('token', bind(onToken));
+
+		if (opts.stripeGatewayType === 'PaymentIntents')
+			paymentRequest.on('paymentmethod', bind(onPaymentMethod));
+		else
+			paymentRequest.on('token', bind(onToken));
 
 	}).catch(console.error); // eslint-disable-line no-console
 

@@ -240,16 +240,20 @@ class StripeController extends Controller
 				}
 			}
 
-			return $this->asJson([ 'status' => $status ]);
+			return $this->asJson([ 'status' => $status, 'errors' => $order->getErrors() ]);
 		}
 
 		$order->setGatewayId($wp->getStripeGateway()->id);
 		$gateway = $order->getGateway();
 
+		$gatewayType = explode('\\', get_class($wp->getStripeGateway()));
+		$gatewayType = end($gatewayType);
+
 		$paymentSource = $order->getPaymentSource();
 		$paymentForm = $gateway->getPaymentFormModel();
+		$tokenOrPaymentMethodId = $gatewayType === 'PaymentIntents' ? 'paymentMethodId' : 'token';
 		$paymentForm->setAttributes([
-			'token' => $token['id'],
+			$tokenOrPaymentMethodId => $token['id'],
 		], false);
 
 		if ($paymentSource)
@@ -269,7 +273,7 @@ class StripeController extends Controller
 				$transaction
 			);
 		} catch (Throwable $e) {
-			return $this->asJson(['status' => 'fail']);
+			return $this->asJson(['status' => 'fail', 'errors' => [$e->getMessage()]]);
 		}
 
 		Craft::$app->getDb()->createCommand()

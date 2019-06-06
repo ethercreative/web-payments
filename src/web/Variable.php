@@ -11,11 +11,13 @@ namespace ether\webpayments\web;
 use Craft;
 use craft\commerce\elements\Order;
 use craft\commerce\Plugin as Commerce;
+use craft\commerce\stripe\Plugin as StripePlugin;
 use craft\errors\ElementNotFoundException;
 use craft\errors\SiteNotFoundException;
 use craft\web\View;
 use ether\webpayments\web\assets\WebPaymentsAsset;
 use ether\webpayments\WebPayments;
+use Stripe\PaymentIntent;
 use Throwable;
 use Twig\Markup;
 use yii\base\Exception;
@@ -61,6 +63,9 @@ class Variable
 		if (!empty($options['js']))
 			$jsVariable = $options['js'] . '=';
 
+		$gatewayType = explode('\\', get_class($wp->getStripeGateway()));
+		$gatewayType = end($gatewayType);
+
 		$options = array_merge([
 			'id' => $id,
 			'csrf' => [$general->csrfTokenName, $request->getCsrfToken()],
@@ -75,6 +80,7 @@ class Variable
 
 			'onComplete' => [],
 
+			'stripeGatewayType' => $gatewayType,
 			'stripeApiKey' => $wp->getStripeGateway()->settings['publishableKey'],
 			'style' => [],
 		], $options);
