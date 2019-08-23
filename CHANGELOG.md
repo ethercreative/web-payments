@@ -1,4 +1,7 @@
 ## [Unreleased] 1.0.3
+### Added
+- Add `reload` function to button JS object (Closes #3)
+
 ### Fixed
 - Fix decimal serialization issue in PHP >=7.1 (Fixes #4) 
 

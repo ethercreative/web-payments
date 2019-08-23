@@ -156,7 +156,8 @@ function onPaymentMethod (e, state, post) {
  */
 window.CraftWebPayments = function (opts) {
 
-	opts = Object.freeze(opts);
+	if (!Object.isFrozen(opts))
+		opts = Object.freeze(opts);
 
 	// Constants
 	// -------------------------------------------------------------------------
@@ -243,6 +244,10 @@ window.CraftWebPayments = function (opts) {
 
 		refresh () {
 			updateItems(null, state, paymentRequest, postInternal);
+		},
+
+		reload () {
+			return window.CraftWebPayments(opts);
 		},
 	});
 

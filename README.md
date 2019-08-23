@@ -132,6 +132,16 @@ window.payButton.refresh();
 
 Note that you can't update the button while the payment dialog is active.
 
+If you need to reload the button (i.e. if the DOM has changed) you can use the 
+`reload()` function.
+
+```js
+window.payButton = window.payButton.reload();
+```
+
+`reload()` will return a new instance of the button, so you'll want to replace 
+your existing variable with that new instance.
+
 ## TODO
 - [x] When using a cart, actually use the cart to keep fields / options persistent
   - [x] Remove cart option (if items isn't set, use active cart)
