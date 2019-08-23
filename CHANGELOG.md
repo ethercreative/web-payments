@@ -1,4 +1,4 @@
-## [Unreleased] 1.0.3
+## 1.0.3 - 2019-08-23
 ### Added
 - Add `reload` function to button JS object (Closes #3)
 
