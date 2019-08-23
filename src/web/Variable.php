@@ -56,6 +56,10 @@ class Variable
 
 		$cart = $this->_getCart($options);
 
+		$oldPrecision = ini_get('serialize_precision');
+		if (version_compare(phpversion(), '7.1', '>='))
+			ini_set('serialize_precision', 14);
+
 		if ($cart === null || empty($cart['items']))
 			return null;
 
@@ -101,6 +105,9 @@ class Variable
 			View::POS_END
 		);
 
+		if (version_compare(phpversion(), '7.1', '>='))
+			ini_set('serialize_precision', $oldPrecision);
+
 		return new Markup('<div id="' . $id . '"></div>', 'utf8');
 	}
 
@@ -116,7 +123,7 @@ class Variable
 	 * @throws Throwable
 	 * @throws SiteNotFoundException
 	 */
-	private function _getCart (array $options)
+	private function _getCart (array $options = [])
 	{
 		$wp = WebPayments::getInstance()->stripe;
 

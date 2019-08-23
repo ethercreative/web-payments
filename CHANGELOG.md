@@ -1,3 +1,7 @@
+## [Unreleased] 1.0.3
+### Fixed
+- Fix decimal serialization issue in PHP >=7.1 (Fixes #4) 
+
 ## 1.0.2.1 - 2019-06-06
 ### Fixed
 - Fix env variables not being parsed

@@ -103,6 +103,8 @@ class StripeService extends Component
 			$li->qty = $item['qty'];
 			if (array_key_exists('options', $item))
 				$li->setOptions($item['options']);
+			else
+				$li->setOptions([]);
 			$li->refreshFromPurchasable();
 
 			if ($save)
