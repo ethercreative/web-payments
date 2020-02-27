@@ -170,16 +170,17 @@ class StripeService extends Component
 		}
 
 		foreach ($order->adjustments as $adjustment)
-		{
-			$amount = $adjustment->amount * 100;
+			if (!$adjustment->included)
+			{
+				$amount = $adjustment->amount * 100;
 
-			$displayItems[] = [
-				'label'  => $adjustment->name,
-				'amount' => $amount,
-			];
+				$displayItems[] = [
+					'label'  => $adjustment->name,
+					'amount' => $amount,
+				];
 
-			$total += $amount;
-		}
+				$total += $amount;
+			}
 
 		$ret = [
 			'id'              => $order->id,
