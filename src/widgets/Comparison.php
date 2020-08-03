@@ -110,6 +110,9 @@ class Comparison extends Widget
 			])
 			->count();
 
+		if (!$total) 
+			return $p = 0;
+
 		$wp = (new Query())
 			->from('{{%web_payments}} wp')
 			->leftJoin(
