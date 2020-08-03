@@ -1,3 +1,7 @@
+## 1.0.5 - 2020-08-03
+### Fixed
+- Fix division by zero error on widget with no orders (Fixes #17, via @yoannisj)
+
 ## 1.0.4 - 2020-02-27
 ### Fixed
 - Fix included tax being added to total (Fixes #6)
