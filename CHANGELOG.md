@@ -1,6 +1,10 @@
-## 1.0.5 - 2020-11-16
+## 1.0.6 - 2020-11-16
 ### Fixed
 - Fix issue when creating payment button for single purchasable
+
+## 1.0.5 - 2020-08-03
+### Fixed
+- Fix division by zero error on widget with no orders (Fixes #17, via @yoannisj)
 
 ## 1.0.4 - 2020-02-27
 ### Fixed
