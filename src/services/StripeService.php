@@ -105,12 +105,13 @@ class StripeService extends Component
 				$li->setOptions($item['options']);
 			else
 				$li->setOptions([]);
-			$li->refreshFromPurchasable();
 
 			if ($save)
 				$li->orderId = $order->id;
 
 			$order->addLineItem($li);
+
+			$li->refreshFromPurchasable();
 		}
 
 		return $order;
