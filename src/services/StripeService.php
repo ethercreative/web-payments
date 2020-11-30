@@ -154,7 +154,7 @@ class StripeService extends Component
 
 		foreach ($order->lineItems as $item)
 		{
-			$amount = $item->purchasable->salePrice * $item->qty * 100;
+			$amount = round($item->purchasable->salePrice * $item->qty * 100);
 
 			$items[] = [
 				'id' => $item->purchasableId,
@@ -211,9 +211,13 @@ class StripeService extends Component
 		if ($order === null)
 			return [];
 
-		$shippingMethods =
-			Commerce::getInstance()->getShippingMethods()
-		                           ->getAvailableShippingMethods($order);
+		$shippingMethods = Commerce::getInstance()->getShippingMethods()->getAvailableShippingMethods($order);
+
+		if (empty($shippingMethods) && Commerce::getInstance()->edition === Commerce::EDITION_LITE)
+		{
+			$method = Commerce::getInstance()->getShippingMethods()->getLiteShippingMethod();
+			$shippingMethods = [$method->handle => $method];
+		}
 
 		$methods = [];
 

@@ -75,9 +75,11 @@ function onShippingAddressChange (e, state, post) {
 		address: e.shippingAddress,
 	}).then(data => {
 		state.update({ shippingAddress: e.shippingAddress });
+		delete data.id;
 		e.updateWith(data);
-	}).catch(() => {
-		e.updateWith({ status: 'fail' });
+	}).catch(err => {
+		console.error(err);
+		// e.updateWith({ status: 'fail' });
 	});
 }
 
@@ -85,7 +87,7 @@ function onShippingAddressChange (e, state, post) {
  * Handle the changing shipping option
  *
  * @param {Object} e
- * @param {array} state
+ * @param {Object} state
  * @param {Function} post
  */
 function onShippingOptionChange (e, state, post) {
@@ -96,9 +98,11 @@ function onShippingOptionChange (e, state, post) {
 		method: e.shippingOption,
 	}).then(data => {
 		state.update({ shippingOption: e.shippingOption });
+		delete data.id;
 		e.updateWith(data);
-	}).catch(() => {
-		e.updateWith({ status: 'fail' });
+	}).catch(err => {
+		console.error(err);
+		// e.updateWith({ status: 'fail' });
 	});
 }
 

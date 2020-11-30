@@ -1,3 +1,8 @@
+## 1.0.7 - 2020-11-30
+### Fixed
+- Fix no shipping options with Commerce Lite
+- Fix customer not being set on orders
+
 ## 1.0.6 - 2020-11-16
 ### Fixed
 - Fix issue when creating payment button for single purchasable

@@ -98,9 +98,18 @@ class StripeController extends Controller
 		if (!$order->shippingAddress->validate())
 			return $this->asJson(['status' => 'invalid_shipping_address']);
 
-		$shippingMethods = $order->getAvailableShippingMethods();
-		if (!empty($shippingMethods))
-			$order->shippingMethodHandle = $shippingMethods[key($shippingMethods)]->handle;
+		$shippingMethods = $order->getAvailableShippingMethodOptions();
+
+		if (empty($shippingMethods) && Commerce::getInstance()->edition === Commerce::EDITION_LITE)
+		{
+			$method = Commerce::getInstance()->getShippingMethods()->getLiteShippingMethod();
+			$shippingMethods = [$method->handle => $method];
+		}
+
+		if (empty($shippingMethods))
+			return $this->asJson(['status' => 'fail']);
+
+		$order->shippingMethodHandle = $shippingMethods[key($shippingMethods)]->handle;
 
 		return $this->asJson(array_merge(
 			$wp->orderToPaymentRequest($order),
@@ -218,7 +227,6 @@ class StripeController extends Controller
 
 			/** @var Field $field */
 			$field = Craft::$app->getFields()->getFieldByUid($uid);
-			/** @noinspection PhpParamsInspection */
 			$order->setFieldValue($field->handle, $requestDetails[$key]);
 		}
 
@@ -242,6 +250,9 @@ class StripeController extends Controller
 
 			return $this->asJson([ 'status' => $status, 'errors' => $order->getErrors() ]);
 		}
+
+		if (!$order->customerId)
+			$order->customerId = Commerce::getInstance()->getCustomers()->getCustomer()->id;
 
 		$order->setGatewayId($wp->getStripeGateway()->id);
 		$gateway = $order->getGateway();

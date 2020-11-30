@@ -20,6 +20,10 @@ module.exports = {
 		],
 	},
 
+	sass: {
+		run: false,
+	},
+
 	js: {
 		// If set to false, JS compilation will not run
 		run: true,
