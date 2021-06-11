@@ -227,7 +227,7 @@ class StripeService extends Component
 			$methods[] = [
 				'id'     => $method->handle,
 				'label'  => $method->name,
-				'amount' => $method->getPriceForOrder($order) * 100,
+				'amount' => (int) ($method->getPriceForOrder($order) * 100),
 			];
 		}
 
