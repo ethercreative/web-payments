@@ -173,7 +173,7 @@ class StripeService extends Component
 		foreach ($order->adjustments as $adjustment)
 			if (!$adjustment->included)
 			{
-				$amount = $adjustment->amount * 100;
+				$amount = round($adjustment->amount * 100);
 
 				$displayItems[] = [
 					'label'  => $adjustment->name,
@@ -227,7 +227,7 @@ class StripeService extends Component
 			$methods[] = [
 				'id'     => $method->handle,
 				'label'  => $method->name,
-				'amount' => (int) ($method->getPriceForOrder($order) * 100),
+				'amount' => round($method->getPriceForOrder($order) * 100),
 			];
 		}
 

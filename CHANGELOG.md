@@ -1,6 +1,6 @@
 ## 1.0.8 - 2021-06-11
 ### Fixed
-- Fix shipping methods sometimes returning as floats
+- Fix shipping methods sometimes returning as floats & other rounding issues
 
 ## 1.0.7 - 2020-11-30
 ### Fixed
