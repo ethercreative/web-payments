@@ -1,3 +1,7 @@
+## 1.0.9 - 2021-10-13
+### Added
+- Add support for Guzzle 7
+
 ## 1.0.8 - 2021-06-11
 ### Fixed
 - Fix shipping methods sometimes returning as floats & other rounding issues
