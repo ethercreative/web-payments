@@ -1,0 +1,15 @@
+{
+	"nav": {
+		"index": "Introduction",
+		"getting-started": {
+			"_label": "Getting Started",
+			"config": "Config",
+			"options": "Options"
+		},
+		"examples": {
+			"_label": "Examples",
+			"twig": "Twig Examples",
+			"dynamic-updating": "Dynamic Updating"
+		},
+	}
+}
