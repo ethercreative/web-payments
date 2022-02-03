@@ -154,7 +154,7 @@ class StripeService extends Component
 
 		foreach ($order->lineItems as $item)
 		{
-			$amount = round($item->purchasable->salePrice * $item->qty * 100);
+			$amount = round($item->salePrice * $item->qty * 100);
 
 			$items[] = [
 				'id' => $item->purchasableId,

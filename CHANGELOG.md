@@ -1,3 +1,7 @@
+## 1.0.9.2 - 2022-02-03
+### Fixed
+- Use line item price rather than purchasable (Fixes #27)
+
 ## 1.0.9 - 2021-10-13
 ### Added
 - Add support for Guzzle 7
