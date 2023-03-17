@@ -37,7 +37,7 @@ class Settings extends Model
 	// Methods
 	// =========================================================================
 
-	public function rules ()
+	public function rules (): array
 	{
 		return [
 			[['gatewayUid'], 'required'],

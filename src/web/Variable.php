@@ -14,6 +14,7 @@ use craft\commerce\Plugin as Commerce;
 use craft\commerce\stripe\Plugin as StripePlugin;
 use craft\errors\ElementNotFoundException;
 use craft\errors\SiteNotFoundException;
+use craft\helpers\App;
 use craft\web\View;
 use ether\webpayments\web\assets\WebPaymentsAsset;
 use ether\webpayments\WebPayments;
@@ -37,14 +38,14 @@ class Variable
 	 *
 	 * @param array $options
 	 *
-	 * @return string
+	 * @return string|Markup|null
 	 * @throws InvalidConfigException
 	 * @throws Throwable
 	 * @throws ElementNotFoundException
 	 * @throws Exception
 	 */
-	public function button (array $options = [])
-	{
+	public function button (array $options = []): string|Markup|null
+    {
 		$view = Craft::$app->getView();
 		$request = Craft::$app->getRequest();
 		$general = Craft::$app->getConfig()->getGeneral();
@@ -76,7 +77,7 @@ class Variable
 			'csrf' => [$general->csrfTokenName, $request->getCsrfToken()],
 			'actionTrigger' => $general->actionTrigger,
 
-			'country' => $commerce->getAddresses()->getStoreLocationAddress()->country->iso,
+			'country' => $commerce->getStore()->getStore()->getLocationAddress()->getCountryCode(),
 			'currency' => $commerce->getCarts()->getCart()->currency,
 			'shippingMethods' => [],
 
@@ -86,7 +87,7 @@ class Variable
 			'onComplete' => [],
 
 			'stripeGatewayType' => $gatewayType,
-			'stripeApiKey' => Craft::parseEnv($gateway->settings['publishableKey']),
+			'stripeApiKey' => App::parseEnv($gateway->settings['publishableKey']),
 			'style' => [],
 		], $options);
 
@@ -123,8 +124,8 @@ class Variable
 	 * @throws Throwable
 	 * @throws SiteNotFoundException
 	 */
-	private function _getCart (array $options = [])
-	{
+	private function _getCart (array $options = []): ?array
+    {
 		$wp = WebPayments::getInstance()->stripe;
 
 		if (array_key_exists('cart', $options) && $options['cart'] instanceof Order)

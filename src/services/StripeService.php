@@ -14,7 +14,7 @@ use craft\commerce\base\Gateway;
 use craft\commerce\base\GatewayInterface;
 use craft\commerce\base\Purchasable;
 use craft\commerce\elements\Order;
-use craft\commerce\models\Address;
+use craft\elements\Address;
 use craft\commerce\models\LineItem;
 use craft\commerce\models\ShippingMethod;
 use craft\commerce\Plugin as Commerce;
@@ -37,11 +37,11 @@ class StripeService extends Component
 {
 
 	/**
-	 * @return Gateway|GatewayInterface|null
+	 * @return GatewayInterface|null
 	 * @throws InvalidConfigException
 	 */
-	public function getStripeGateway ()
-	{
+	public function getStripeGateway (): GatewayInterface|null
+    {
 		$uid = WebPayments::getInstance()->getSettings()->gatewayUid;
 
 		if (!$uid)
@@ -71,8 +71,8 @@ class StripeService extends Component
 	 * @throws SiteNotFoundException
 	 * @throws Throwable
 	 */
-	public function buildOrder ($cartId, array $items, $save = false)
-	{
+	public function buildOrder (?int $cartId, array $items, $save = false): Order
+    {
 		$cartId = Json::decodeIfJson($cartId);
 
 		if ($cartId)
@@ -144,8 +144,8 @@ class StripeService extends Component
 	 * @return array
 	 * @throws Exception
 	 */
-	public function orderToPaymentRequest (Order $order, $includeItems = false)
-	{
+	public function orderToPaymentRequest (Order $order, $includeItems = false): array
+    {
 		$items        = [];
 		$displayItems = [];
 		$total        = 0;
@@ -202,16 +202,16 @@ class StripeService extends Component
 	/**
 	 * Get the shipping methods (as Payment Request shipping options)
 	 *
-	 * @param Order $order
+	 * @param Order|null $order
 	 *
 	 * @return array
 	 */
-	public function getShippingMethods (Order $order)
-	{
+	public function getShippingMethods (?Order $order): array
+    {
 		if ($order === null)
 			return [];
 
-		$shippingMethods = Commerce::getInstance()->getShippingMethods()->getAvailableShippingMethods($order);
+		$shippingMethods = Commerce::getInstance()->getShippingMethods()->getMatchingShippingMethods($order);
 
 		if (empty($shippingMethods) && Commerce::getInstance()->edition === Commerce::EDITION_LITE)
 		{
@@ -239,9 +239,9 @@ class StripeService extends Component
 	 *
 	 * @param Order  $order
 	 * @param array  $address
-	 * @param string $fallbackName
+	 * @param string|null $fallbackName
 	 */
-	public function setShippingAddress (Order $order, array $address, $fallbackName = null)
+	public function setShippingAddress (Order $order, array $address, ?string $fallbackName = null)
 	{
 		if (empty($address) || empty($address['country']))
 			return;
@@ -257,16 +257,14 @@ class StripeService extends Component
 			$a->lastName = $name[1];
 
 		if (!empty($address['addressLine']))
-			$a->address1 = $address['addressLine'][0];
+			$a->addressLine1 = $address['addressLine'][0];
 		if (count($address['addressLine']) > 1)
-			$a->address2 = $address['addressLine'][1];
+			$a->addressLine2 = $address['addressLine'][1];
 
-		$a->city = $address['city'];
-		$a->setStateValue($address['region']);
-		$a->countryId = Commerce::getInstance()->getCountries()->getCountryByIso(
-			$address['country']
-		)->id;
-		$a->zipCode = $address['postalCode'];
+		$a->locality = $address['city'];
+		$a->administrativeArea = $address['region'];
+		$a->countryCode = $address['country'];
+		$a->postalCode = $address['postalCode'];
 
 		$order->setShippingAddress($a);
 	}
@@ -276,9 +274,9 @@ class StripeService extends Component
 	 *
 	 * @param Order $order
 	 * @param array $token
-	 * @param null  $fallbackName
+	 * @param string|null  $fallbackName
 	 */
-	public function setBillingAddress (Order $order, array $token, $fallbackName = null)
+	public function setBillingAddress (Order $order, array $token, ?string $fallbackName = null)
 	{
 		$address = $token['card'];
 
@@ -296,14 +294,12 @@ class StripeService extends Component
 		if (count($name) > 1)
 			$a->lastName = $name[1];
 
-		$a->address1 = $address['address_line1'];
-		$a->address2 = $address['address_line2'];
-		$a->city = $address['address_city'];
-		$a->setStateValue($address['address_state']);
-		$a->countryId = Commerce::getInstance()->getCountries()->getCountryByIso(
-			$address['address_country']
-		)->id;
-		$a->zipCode = $address['address_zip'];
+		$a->addressLine1 = $address['address_line1'];
+		$a->addressLine2 = $address['address_line2'];
+		$a->locality = $address['address_city'];
+		$a->administrativeArea = $address['address_state'];
+		$a->countryCode = $address['address_country'];
+		$a->postalCode = $address['address_zip'];
 
 		$order->setBillingAddress($a);
 	}
