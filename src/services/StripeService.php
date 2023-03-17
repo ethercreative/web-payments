@@ -10,7 +10,6 @@ namespace ether\webpayments\services;
 
 use Craft;
 use craft\base\Component;
-use craft\commerce\base\Gateway;
 use craft\commerce\base\GatewayInterface;
 use craft\commerce\base\Purchasable;
 use craft\commerce\elements\Order;
@@ -22,6 +21,7 @@ use craft\db\Query;
 use craft\errors\ElementNotFoundException;
 use craft\errors\SiteNotFoundException;
 use craft\helpers\Json;
+use ether\webpayments\events\AddressEvent;
 use ether\webpayments\WebPayments;
 use Throwable;
 use yii\base\Exception;
@@ -35,6 +35,7 @@ use yii\base\InvalidConfigException;
  */
 class StripeService extends Component
 {
+    public const EVENT_MODIFY_ADDRESS = 'modifyAddress';
 
 	/**
 	 * @return GatewayInterface|null
@@ -61,9 +62,9 @@ class StripeService extends Component
 	/**
 	 * Build an Order from the given array of items
 	 *
-	 * @param int|null $cartId
+	 * @param int|string|null $cartId
 	 * @param array $items - An array of arrays: ['id' => purchasableId, 'qty' => qty]
-	 * @param bool  $save
+	 * @param bool $save
 	 *
 	 * @return Order
 	 * @throws ElementNotFoundException
@@ -71,7 +72,7 @@ class StripeService extends Component
 	 * @throws SiteNotFoundException
 	 * @throws Throwable
 	 */
-	public function buildOrder (?int $cartId, array $items, $save = false): Order
+	public function buildOrder (int|string|null $cartId, array $items, bool $save = false): Order
     {
 		$cartId = Json::decodeIfJson($cartId);
 
@@ -98,20 +99,9 @@ class StripeService extends Component
 			/** @var Purchasable $purchasable */
 			$purchasable = $elements->getElementById($item['id']);
 
-			$li = new LineItem();
-			$li->setPurchasable($purchasable);
+            $li = Commerce::getInstance()->getLineItems()->createLineItem($order, $purchasable->id, $item['options'] ?? []);
 			$li->qty = $item['qty'];
-			if (array_key_exists('options', $item))
-				$li->setOptions($item['options']);
-			else
-				$li->setOptions([]);
-
-			if ($save)
-				$li->orderId = $order->id;
-
 			$order->addLineItem($li);
-
-			$li->refreshFromPurchasable();
 		}
 
 		return $order;
@@ -139,12 +129,12 @@ class StripeService extends Component
 	 * Convert the given order to a Payment Request object
 	 *
 	 * @param Order $order
-	 * @param bool  $includeItems
+	 * @param bool $includeItems
 	 *
 	 * @return array
 	 * @throws Exception
 	 */
-	public function orderToPaymentRequest (Order $order, $includeItems = false): array
+	public function orderToPaymentRequest (Order $order, bool $includeItems = false): array
     {
 		$items        = [];
 		$displayItems = [];
@@ -265,6 +255,18 @@ class StripeService extends Component
 		$a->administrativeArea = $address['region'];
 		$a->countryCode = $address['country'];
 		$a->postalCode = $address['postalCode'];
+        $a->ownerId = $order->id;
+
+        if ($this->hasEventHandlers(static::EVENT_MODIFY_ADDRESS)) {
+            $event = new AddressEvent([
+                'order' => $order,
+                'address' => $a,
+                'stripeData' => $address,
+            ]);
+
+            $this->trigger(static::EVENT_MODIFY_ADDRESS, $event);
+            $a = $event->address;
+        }
 
 		$order->setShippingAddress($a);
 	}
@@ -300,6 +302,18 @@ class StripeService extends Component
 		$a->administrativeArea = $address['address_state'];
 		$a->countryCode = $address['address_country'];
 		$a->postalCode = $address['address_zip'];
+        $a->ownerId = $order->id;
+
+        if ($this->hasEventHandlers(static::EVENT_MODIFY_ADDRESS)) {
+            $event = new AddressEvent([
+                'order' => $order,
+                'address' => $a,
+                'stripeData' => $address,
+            ]);
+
+            $this->trigger(static::EVENT_MODIFY_ADDRESS, $event);
+            $a = $event->address;
+        }
 
 		$order->setBillingAddress($a);
 	}

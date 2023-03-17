@@ -61,7 +61,7 @@ class Comparison extends Widget
 		return $path;
 	}
 
-	public function getBodyHtml ()
+	public function getBodyHtml (): ?string
 	{
 		$wpFill = '#0d78f2';
 		$rcFill = '#94bce9';
@@ -110,7 +110,7 @@ class Comparison extends Widget
 			])
 			->count();
 
-		if (!$total) 
+		if (!$total)
 			return $p = 0;
 
 		$wp = (new Query())
