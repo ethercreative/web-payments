@@ -275,13 +275,15 @@ class StripeController extends Controller
 
 		$redirect    = '';
 		$transaction = null;
+        $redirectData = null;
 
 		try {
 			Commerce::getInstance()->getPayments()->processPayment(
 				$order,
 				$paymentForm,
 				$redirect,
-				$transaction
+				$transaction,
+                $redirectData
 			);
 		} catch (Throwable $e) {
 			return $this->asJson(['status' => 'fail', 'errors' => [$e->getMessage()]]);

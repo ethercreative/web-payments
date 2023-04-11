@@ -237,11 +237,12 @@ class StripeService extends Component
 			return;
 
 		if (empty($fallbackName))
-			$fallbackName = 'Unknown Person';
+			$fallbackName = '';
 
 		$a = new Address();
+        $a->fullName = $address['recipient'] ?: $fallbackName;
 
-		$name = explode(' ', $address['recipient'] ?: $fallbackName, 2);
+		$name = explode(' ', $a->fullName, 2);
 		$a->firstName = $name[0];
 		if (count($name) > 1)
 			$a->lastName = $name[1];
@@ -268,6 +269,8 @@ class StripeService extends Component
             $a = $event->address;
         }
 
+        Craft::$app->getElements()->saveElement($a, false);
+
 		$order->setShippingAddress($a);
 	}
 
@@ -280,28 +283,30 @@ class StripeService extends Component
 	 */
 	public function setBillingAddress (Order $order, array $token, ?string $fallbackName = null)
 	{
-		$address = $token['card'];
+		$billingDetails = $token['billing_details'];
+		$address = $billingDetails['address'] ?? null;
 
-		if (empty($address) || empty($address['address_country']))
+		if (empty($address))
 			return;
 
 		if (empty($fallbackName))
-			$fallbackName = 'Unknown Person';
+			$fallbackName = '';
 
 		$a = new Address();
+        $a->fullName = $billingDetails['name'] ?: $fallbackName;
 
-		$name = explode(' ', $address['name'] ?: $fallbackName, 2);
+        $name = explode(' ', $a->fullName, 2);
 
 		$a->firstName = $name[0];
 		if (count($name) > 1)
 			$a->lastName = $name[1];
 
-		$a->addressLine1 = $address['address_line1'];
-		$a->addressLine2 = $address['address_line2'];
-		$a->locality = $address['address_city'];
-		$a->administrativeArea = $address['address_state'];
-		$a->countryCode = $address['address_country'];
-		$a->postalCode = $address['address_zip'];
+		$a->addressLine1 = $address['line1'];
+		$a->addressLine2 = $address['line2'];
+		$a->locality = $address['city'];
+		$a->administrativeArea = $address['state'];
+		$a->countryCode = $address['country'];
+		$a->postalCode = $address['postal_code'];
         $a->ownerId = $order->id;
 
         if ($this->hasEventHandlers(static::EVENT_MODIFY_ADDRESS)) {
@@ -314,6 +319,8 @@ class StripeService extends Component
             $this->trigger(static::EVENT_MODIFY_ADDRESS, $event);
             $a = $event->address;
         }
+
+        Craft::$app->getElements()->saveElement($a, false);
 
 		$order->setBillingAddress($a);
 	}
