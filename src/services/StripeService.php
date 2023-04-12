@@ -242,11 +242,6 @@ class StripeService extends Component
 		$a = new Address();
         $a->fullName = $address['recipient'] ?: $fallbackName;
 
-		$name = explode(' ', $a->fullName, 2);
-		$a->firstName = $name[0];
-		if (count($name) > 1)
-			$a->lastName = $name[1];
-
 		if (!empty($address['addressLine']))
 			$a->addressLine1 = $address['addressLine'][0];
 		if (count($address['addressLine']) > 1)
@@ -294,12 +289,6 @@ class StripeService extends Component
 
 		$a = new Address();
         $a->fullName = $billingDetails['name'] ?: $fallbackName;
-
-        $name = explode(' ', $a->fullName, 2);
-
-		$a->firstName = $name[0];
-		if (count($name) > 1)
-			$a->lastName = $name[1];
 
 		$a->addressLine1 = $address['line1'];
 		$a->addressLine2 = $address['line2'];
