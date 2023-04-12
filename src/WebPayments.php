@@ -39,12 +39,12 @@ class WebPayments extends Plugin
 	// Properties
 	// =========================================================================
 
-	public $hasCpSettings = true;
+	public bool $hasCpSettings = true;
 
 	// Craft
 	// =========================================================================
 
-	public function init ()
+	public function init (): void
 	{
 		parent::init();
 
@@ -74,7 +74,7 @@ class WebPayments extends Plugin
 	// Settings
 	// =========================================================================
 
-	protected function createSettingsModel ()
+	protected function createSettingsModel (): ?Model
 	{
 		return new Settings();
 	}
@@ -85,7 +85,7 @@ class WebPayments extends Plugin
 	 * @throws RuntimeError
 	 * @throws SyntaxError
 	 */
-	protected function settingsHtml ()
+	protected function settingsHtml (): ?string
 	{
 		$gateways = [null => '---'];
 
@@ -115,9 +115,9 @@ class WebPayments extends Plugin
 	}
 
 	/**
-	 * @return Settings|bool|Model|null
+	 * @return Model|null
 	 */
-	public function getSettings ()
+	public function getSettings (): ?Model
 	{
 		return parent::getSettings();
 	}

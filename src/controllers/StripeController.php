@@ -32,7 +32,7 @@ use craft\commerce\Plugin as Commerce;
 class StripeController extends Controller
 {
 
-	protected $allowAnonymous = true;
+	protected array|int|bool $allowAnonymous = true;
 
 	/**
 	 * @return Response
@@ -42,8 +42,8 @@ class StripeController extends Controller
 	 * @throws SiteNotFoundException
 	 * @throws Throwable
 	 */
-	public function actionUpdateDisplayItems ()
-	{
+	public function actionUpdateDisplayItems (): Response
+    {
 		$this->requireAcceptsJson();
 		$this->requirePostRequest();
 
@@ -72,8 +72,8 @@ class StripeController extends Controller
 	 * @throws Exception
 	 * @throws BadRequestHttpException
 	 */
-	public function actionUpdateAddress ()
-	{
+	public function actionUpdateAddress (): Response
+    {
 		$this->requireAcceptsJson();
 		$this->requirePostRequest();
 
@@ -125,8 +125,8 @@ class StripeController extends Controller
 	 * @throws SiteNotFoundException
 	 * @throws Throwable
 	 */
-	public function actionUpdateShipping ()
-	{
+	public function actionUpdateShipping (): Response
+    {
 		$this->requireAcceptsJson();
 		$this->requirePostRequest();
 
@@ -170,8 +170,8 @@ class StripeController extends Controller
 	 * @throws InvalidConfigException
 	 * @throws NotSupportedException
 	 */
-	public function actionPay ()
-	{
+	public function actionPay (): Response
+    {
 		$this->requireAcceptsJson();
 		$this->requirePostRequest();
 
@@ -236,12 +236,12 @@ class StripeController extends Controller
 
 			foreach ($order->getErrorSummary(true) as $error)
 			{
-				if (strpos($error, 'email') !== false)
+				if (str_contains($error, 'email'))
 				{
 					$status = 'invalid_payer_email';
 					break;
 				}
-				else if (strpos($error, 'address') !== false)
+				else if (str_contains($error, 'address'))
 				{
 					$status = 'invalid_shipping_address';
 					break;
@@ -275,13 +275,15 @@ class StripeController extends Controller
 
 		$redirect    = '';
 		$transaction = null;
+        $redirectData = null;
 
 		try {
 			Commerce::getInstance()->getPayments()->processPayment(
 				$order,
 				$paymentForm,
 				$redirect,
-				$transaction
+				$transaction,
+                $redirectData
 			);
 		} catch (Throwable $e) {
 			return $this->asJson(['status' => 'fail', 'errors' => [$e->getMessage()]]);

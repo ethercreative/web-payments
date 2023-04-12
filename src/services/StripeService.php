@@ -10,11 +10,10 @@ namespace ether\webpayments\services;
 
 use Craft;
 use craft\base\Component;
-use craft\commerce\base\Gateway;
 use craft\commerce\base\GatewayInterface;
 use craft\commerce\base\Purchasable;
 use craft\commerce\elements\Order;
-use craft\commerce\models\Address;
+use craft\elements\Address;
 use craft\commerce\models\LineItem;
 use craft\commerce\models\ShippingMethod;
 use craft\commerce\Plugin as Commerce;
@@ -22,6 +21,7 @@ use craft\db\Query;
 use craft\errors\ElementNotFoundException;
 use craft\errors\SiteNotFoundException;
 use craft\helpers\Json;
+use ether\webpayments\events\AddressEvent;
 use ether\webpayments\WebPayments;
 use Throwable;
 use yii\base\Exception;
@@ -35,13 +35,14 @@ use yii\base\InvalidConfigException;
  */
 class StripeService extends Component
 {
+    public const EVENT_MODIFY_ADDRESS = 'modifyAddress';
 
 	/**
-	 * @return Gateway|GatewayInterface|null
+	 * @return GatewayInterface|null
 	 * @throws InvalidConfigException
 	 */
-	public function getStripeGateway ()
-	{
+	public function getStripeGateway (): GatewayInterface|null
+    {
 		$uid = WebPayments::getInstance()->getSettings()->gatewayUid;
 
 		if (!$uid)
@@ -61,9 +62,9 @@ class StripeService extends Component
 	/**
 	 * Build an Order from the given array of items
 	 *
-	 * @param int|null $cartId
+	 * @param int|string|null $cartId
 	 * @param array $items - An array of arrays: ['id' => purchasableId, 'qty' => qty]
-	 * @param bool  $save
+	 * @param bool $save
 	 *
 	 * @return Order
 	 * @throws ElementNotFoundException
@@ -71,8 +72,8 @@ class StripeService extends Component
 	 * @throws SiteNotFoundException
 	 * @throws Throwable
 	 */
-	public function buildOrder ($cartId, array $items, $save = false)
-	{
+	public function buildOrder (int|string|null $cartId, array $items, bool $save = false): Order
+    {
 		$cartId = Json::decodeIfJson($cartId);
 
 		if ($cartId)
@@ -98,20 +99,9 @@ class StripeService extends Component
 			/** @var Purchasable $purchasable */
 			$purchasable = $elements->getElementById($item['id']);
 
-			$li = new LineItem();
-			$li->setPurchasable($purchasable);
+            $li = Commerce::getInstance()->getLineItems()->createLineItem($order, $purchasable->id, $item['options'] ?? []);
 			$li->qty = $item['qty'];
-			if (array_key_exists('options', $item))
-				$li->setOptions($item['options']);
-			else
-				$li->setOptions([]);
-
-			if ($save)
-				$li->orderId = $order->id;
-
 			$order->addLineItem($li);
-
-			$li->refreshFromPurchasable();
 		}
 
 		return $order;
@@ -139,13 +129,13 @@ class StripeService extends Component
 	 * Convert the given order to a Payment Request object
 	 *
 	 * @param Order $order
-	 * @param bool  $includeItems
+	 * @param bool $includeItems
 	 *
 	 * @return array
 	 * @throws Exception
 	 */
-	public function orderToPaymentRequest (Order $order, $includeItems = false)
-	{
+	public function orderToPaymentRequest (Order $order, bool $includeItems = false): array
+    {
 		$items        = [];
 		$displayItems = [];
 		$total        = 0;
@@ -202,16 +192,16 @@ class StripeService extends Component
 	/**
 	 * Get the shipping methods (as Payment Request shipping options)
 	 *
-	 * @param Order $order
+	 * @param Order|null $order
 	 *
 	 * @return array
 	 */
-	public function getShippingMethods (Order $order)
-	{
+	public function getShippingMethods (?Order $order): array
+    {
 		if ($order === null)
 			return [];
 
-		$shippingMethods = Commerce::getInstance()->getShippingMethods()->getAvailableShippingMethods($order);
+		$shippingMethods = Commerce::getInstance()->getShippingMethods()->getMatchingShippingMethods($order);
 
 		if (empty($shippingMethods) && Commerce::getInstance()->edition === Commerce::EDITION_LITE)
 		{
@@ -239,34 +229,42 @@ class StripeService extends Component
 	 *
 	 * @param Order  $order
 	 * @param array  $address
-	 * @param string $fallbackName
+	 * @param string|null $fallbackName
 	 */
-	public function setShippingAddress (Order $order, array $address, $fallbackName = null)
+	public function setShippingAddress (Order $order, array $address, ?string $fallbackName = null)
 	{
 		if (empty($address) || empty($address['country']))
 			return;
 
 		if (empty($fallbackName))
-			$fallbackName = 'Unknown Person';
+			$fallbackName = '';
 
 		$a = new Address();
-
-		$name = explode(' ', $address['recipient'] ?: $fallbackName, 2);
-		$a->firstName = $name[0];
-		if (count($name) > 1)
-			$a->lastName = $name[1];
+        $a->fullName = $address['recipient'] ?: $fallbackName;
 
 		if (!empty($address['addressLine']))
-			$a->address1 = $address['addressLine'][0];
+			$a->addressLine1 = $address['addressLine'][0];
 		if (count($address['addressLine']) > 1)
-			$a->address2 = $address['addressLine'][1];
+			$a->addressLine2 = $address['addressLine'][1];
 
-		$a->city = $address['city'];
-		$a->setStateValue($address['region']);
-		$a->countryId = Commerce::getInstance()->getCountries()->getCountryByIso(
-			$address['country']
-		)->id;
-		$a->zipCode = $address['postalCode'];
+		$a->locality = $address['city'];
+		$a->administrativeArea = $address['region'];
+		$a->countryCode = $address['country'];
+		$a->postalCode = $address['postalCode'];
+        $a->ownerId = $order->id;
+
+        if ($this->hasEventHandlers(static::EVENT_MODIFY_ADDRESS)) {
+            $event = new AddressEvent([
+                'order' => $order,
+                'address' => $a,
+                'stripeData' => $address,
+            ]);
+
+            $this->trigger(static::EVENT_MODIFY_ADDRESS, $event);
+            $a = $event->address;
+        }
+
+        Craft::$app->getElements()->saveElement($a, false);
 
 		$order->setShippingAddress($a);
 	}
@@ -276,34 +274,42 @@ class StripeService extends Component
 	 *
 	 * @param Order $order
 	 * @param array $token
-	 * @param null  $fallbackName
+	 * @param string|null  $fallbackName
 	 */
-	public function setBillingAddress (Order $order, array $token, $fallbackName = null)
+	public function setBillingAddress (Order $order, array $token, ?string $fallbackName = null)
 	{
-		$address = $token['card'];
+		$billingDetails = $token['billing_details'];
+		$address = $billingDetails['address'] ?? null;
 
-		if (empty($address) || empty($address['address_country']))
+		if (empty($address))
 			return;
 
 		if (empty($fallbackName))
-			$fallbackName = 'Unknown Person';
+			$fallbackName = '';
 
 		$a = new Address();
+        $a->fullName = $billingDetails['name'] ?: $fallbackName;
 
-		$name = explode(' ', $address['name'] ?: $fallbackName, 2);
+		$a->addressLine1 = $address['line1'];
+		$a->addressLine2 = $address['line2'];
+		$a->locality = $address['city'];
+		$a->administrativeArea = $address['state'];
+		$a->countryCode = $address['country'];
+		$a->postalCode = $address['postal_code'];
+        $a->ownerId = $order->id;
 
-		$a->firstName = $name[0];
-		if (count($name) > 1)
-			$a->lastName = $name[1];
+        if ($this->hasEventHandlers(static::EVENT_MODIFY_ADDRESS)) {
+            $event = new AddressEvent([
+                'order' => $order,
+                'address' => $a,
+                'stripeData' => $address,
+            ]);
 
-		$a->address1 = $address['address_line1'];
-		$a->address2 = $address['address_line2'];
-		$a->city = $address['address_city'];
-		$a->setStateValue($address['address_state']);
-		$a->countryId = Commerce::getInstance()->getCountries()->getCountryByIso(
-			$address['address_country']
-		)->id;
-		$a->zipCode = $address['address_zip'];
+            $this->trigger(static::EVENT_MODIFY_ADDRESS, $event);
+            $a = $event->address;
+        }
+
+        Craft::$app->getElements()->saveElement($a, false);
 
 		$order->setBillingAddress($a);
 	}
