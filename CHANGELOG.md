@@ -1,3 +1,7 @@
+## 4.0.0 - 2023-04-12
+### Changed
+- Update to Craft / Commerce 4 (via @jaydensmith)
+
 ## 1.0.9.2 - 2022-02-03
 ### Fixed
 - Use line item price rather than purchasable (Fixes #27)
